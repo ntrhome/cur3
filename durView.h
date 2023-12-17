@@ -11,8 +11,6 @@
 //} DUR_S_PLAYER;
 
 
-void adminALL(DUR_S_MATCH match);
-int admin(DUR_S_DESK desk);
-int adminBW(DUR_S_DESK desk);
+void admin(DUR_S_MATCH match);
 
 #endif //DUR_DURVIEW_H

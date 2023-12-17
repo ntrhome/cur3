@@ -36,7 +36,7 @@ typedef struct dur_s_game {
     DUR_S_HISTORY history;
 } DUR_S_GAME;
 
-typedef enum dur_e_stage {DUR_E_STAGE_MATCH_INIT, DUR_E_STAGE_GAME_INIT, DUR_E_STAGE_FIGHT_INIT, DUR_E_STAGE_FIGHT} DUR_E_STAGE;
+typedef enum dur_e_stage {DUR_E_STAGE_MATCH_INIT, DUR_E_STAGE_GAME_INIT, DUR_E_STAGE_FIGHT_INIT, DUR_E_STAGE_FIGHT, DUR_E_STAGE_FIGHT_ATTACK, DUR_E_STAGE_FIGHT_DEFEND} DUR_E_STAGE;
 
 typedef struct dur_s_match {
     int stage;

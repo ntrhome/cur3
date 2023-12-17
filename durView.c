@@ -11,11 +11,11 @@ static char colorRed[]   = "\033[1;31m"; //"1;"=bright - bordo
 static char colorReset[] = "\033[0m";
 static wchar_t places[]  = L"🃏🂬🂼🂢🂣🃒🃓🃂🃃🂲🂳🂤🂥🃔🃕🂠"; //🃟
 
-void adminALL(DUR_S_MATCH match) {
+void admin(DUR_S_MATCH match) {
     setlocale(LC_ALL, "");
     printf("=========== ADMIN ===========\n");
     printf("| - - - - - match - - - - - - ");
-    printf("| stage = %d ", match.stage);
+    printf("| stage = %2d ", match.stage);
     char *s = "";
     printf("| score = [");
     for(int p = 0; p < DUR_PLAYERS; ++p) {
@@ -56,40 +56,7 @@ void adminALL(DUR_S_MATCH match) {
     printf("========== ===== ===========\n");
 }
 
-int admin(DUR_S_DESK desk) {
-    setlocale(LC_ALL, "");
-    printf("========== ADMIN ===========\n");
-    printf("| DESK   = ");
-    char *color;
-    for(int i=0; i<DUR_CARDS; ++i){
-        int card = desk.card[i];
-        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
-        printf("%s%lc", color, cards[card]);
-    }
-    color = ((desk.trump / 2) == 0) ? colorWhite : colorRed;
-    printf("%s (%d) [%s%lc%s]\n", colorReset, desk.count, color, suits[desk.trump], colorReset);
-    printf("| PLACE  = ");
-    for(int i=0; i<DUR_CARDS; ++i){
-       printf("%lc", places[desk.place[i]+1]); //"+1" потому как "enum dur_e_place {DUR_E_PLACE_DESK=-1, ...""
-    }
-    printf("\n");
-    return DUR_NONE;
-}
 
-int adminBW(DUR_S_DESK desk) {
-    setlocale(LC_ALL, "");
-    printf("========== ADMIN ===========\n");
-    printf("| DESK   = ");
-    for(int i=0; i<DUR_CARDS; ++i){
-        int card = desk.card[i];
-        printf("%lc", cards[card]);
-    }
-    printf(" (%d) [%lc]\n", desk.count, suits[desk.trump]);
-    printf("| PLACE  = ");
-    for(int i=0; i<DUR_CARDS; ++i){
-       printf("%lc", places[desk.place[i]+1]); //"+1" потому как "enum dur_e_place {DUR_E_PLACE_DESK=-1, ...""
-    }
-    printf("\n");
 
 
 //    int ch;
@@ -98,8 +65,7 @@ int adminBW(DUR_S_DESK desk) {
 //ch = getchar();
 //printf("%d\n", ch);
 //printf("%c\n", (char) ch);
-    return DUR_NONE;
-}
+
 
 // = = = = = = = = = = = = = = = = = = = = = = = =
 

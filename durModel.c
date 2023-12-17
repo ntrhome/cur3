@@ -69,13 +69,15 @@ static void fightInit(DUR_S_MATCH *d) {
         }
     }
     d->game.fight.dealer = d->game.fight.attacker; //save next fight dealer
-    d->stage = DUR_E_STAGE_FIGHT;
+    d->stage = DUR_E_STAGE_FIGHT_ATTACK;
 }
 
 static void fight(DUR_S_MATCH *d) {
     //ПЕРЕХОДИМ В РЕЖИМ ОДНОЗНАЧНО ДВУХ ИГРОКОВ!
-    //собираем инфу атакера, даем ф() на получение хода
-    //собираем инфу дефендера, ждем ф() ответ
+
+
+    //собираем и анализируем инфу атакера, даем ф() на получение хода
+    //собираем и анализируем инфу дефендера, ждем ф() ответ
     //анализируем баланс битвы, выставляем стейдж
 }
 
@@ -91,7 +93,7 @@ int dur(DUR_S_MATCH *d) {
             fightInit(d);
             //break;
         case DUR_E_STAGE_FIGHT:
-            adminALL(*d);
+            admin(*d);
 
             break;
     }
