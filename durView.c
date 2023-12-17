@@ -14,8 +14,8 @@ static wchar_t places[]  = L"🃏🂬🂼🂢🂣🃒🃓🃂🃃🂲🂳🂤�
 void adminALL(DUR_S_MATCH match) {
     setlocale(LC_ALL, "");
     printf("=========== ADMIN ===========\n");
-    printf("| - - - - - match - - - - - -\n");
-    printf("| stage = %d\n", match.stage);
+    printf("| - - - - - match - - - - - - ");
+    printf("| stage = %d ", match.stage);
     char *s = "";
     printf("| score = [");
     for(int p = 0; p < DUR_PLAYERS; ++p) {
@@ -23,8 +23,10 @@ void adminALL(DUR_S_MATCH match) {
         s=":";
     }
     printf("]\n");
-    printf("| - - - - - game - - - - - -\n");
-    printf("| winner = %d\n", match.game.winner);
+    printf("| - - - - -  game - - - - - - ");
+    printf("| winner = %d ", match.game.winner);
+    printf("| dealer = %d ", match.game.fight.dealer);
+    printf("| attacker = %d\n", match.game.fight.attacker);
     printf("| DESK  = ");
     char *color;
     for(int i=0; i<DUR_CARDS; ++i){
@@ -39,8 +41,6 @@ void adminALL(DUR_S_MATCH match) {
        printf("%lc", places[match.game.desk.place[i]+1]); //"+1" потому как "enum dur_e_place {DUR_E_PLACE_DESK=-1, ...""
     }
     printf("\n");
-    printf("| dealer   = %d\n", match.game.fight.dealer);
-    printf("| attacker = %d\n", match.game.fight.attacker);
     printf("| HESK  = ");
     for(int i=0; i<match.game.history.count; ++i){
         int card = match.game.desk.card[match.game.history.desk[i]];
