@@ -17,7 +17,6 @@ typedef struct dur_s_field {
     int count;
 } DUR_S_FIELD;
 
-
 typedef struct dur_s_desk {
     int card[DUR_CARDS];
     int place[DUR_CARDS];
@@ -29,6 +28,7 @@ typedef struct dur_s_fight {
     int dealer;   //first dealing player
     int attacker; //fight attack player
     int historyCount;  //fight frame start in history
+    DUR_S_FIELD field;
 } DUR_S_FIGHT;
 
 typedef struct dur_s_history {
