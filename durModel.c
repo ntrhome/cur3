@@ -44,7 +44,7 @@ static void gameInit(DUR_S_MATCH *d) {
 }
 
 static void fightInit(DUR_S_MATCH *d) {
-    int dealerCardCount;
+    int dealerCardCount; //dealing
     for(int p = 0; p < DUR_PLAYERS; ++p) {
         dealerCardCount = 0;
         for(int i = 0; i < DUR_CARDS; ++i) {
@@ -69,11 +69,14 @@ static void fightInit(DUR_S_MATCH *d) {
         }
     }
     d->game.fight.dealer = d->game.fight.attacker; //save next fight dealer
+
+    d->game.fight.historyCount = d->game.history.count;
     d->stage = DUR_E_STAGE_FIGHT_ATTACK;
 }
 
 static void fight(DUR_S_MATCH *d) {
     //ПЕРЕХОДИМ В РЕЖИМ ОДНОЗНАЧНО ДВУХ ИГРОКОВ!
+    //собираем и анализируем инфу поля
 
 
     //собираем и анализируем инфу атакера, даем ф() на получение хода

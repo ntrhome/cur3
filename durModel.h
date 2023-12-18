@@ -11,6 +11,13 @@
 
 typedef enum dur_e_place {DUR_E_PLACE_DESK=-1, DUR_E_PLACE_PLAYER_0, DUR_E_PLACE_PLAYER_1, DUR_E_PLACE_ATTACK_0, DUR_E_PLACE_DEFEND_0, DUR_E_PLACE_ATTACK_1, DUR_E_PLACE_DEFEND_1, DUR_E_PLACE_ATTACK_2, DUR_E_PLACE_DEFEND_2, DUR_E_PLACE_ATTACK_3, DUR_E_PLACE_DEFEND_3, DUR_E_PLACE_ATTACK_4, DUR_E_PLACE_DEFEND_4, DUR_E_PLACE_ATTACK_5, DUR_E_PLACE_DEFEND_5, DUR_E_PLACE_PILE} DUR_E_PLACE;
 
+typedef struct dur_s_field {
+    int desk[2 * DUR_HAND_NORM]; //id of the card from the "desk"
+    int card[2 * DUR_HAND_NORM];
+    int count;
+} DUR_S_FIELD;
+
+
 typedef struct dur_s_desk {
     int card[DUR_CARDS];
     int place[DUR_CARDS];
@@ -21,6 +28,7 @@ typedef struct dur_s_desk {
 typedef struct dur_s_fight {
     int dealer;   //first dealing player
     int attacker; //fight attack player
+    int historyCount;  //fight frame start in history
 } DUR_S_FIGHT;
 
 typedef struct dur_s_history {
