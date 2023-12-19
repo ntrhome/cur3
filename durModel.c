@@ -102,3 +102,18 @@ int dur(DUR_S_MATCH *d) {
     }
     return d->stage;
 }
+
+// DUR_S_MATCH *durNew() { //do for each new match
+//     DUR_S_MATCH *m = malloc(sizeof(DUR_S_MATCH));
+//     m->stage = DUR_E_STAGE_GAME_NEW;
+//     m->score[DUR_E_PLACE_PLAYER_0] = 0;
+//     m->score[DUR_E_PLACE_PLAYER_1] = 0;
+//     m->game.playerWinner = DUR_NONE;
+//     for(int i = 0; i < DUR_CARDS; ++i) {
+//         m->game.desk.card[i] = i;
+//     }
+//     return m; //point to DUR_S_MATCH as match id
+// }
+// void durDel(DUR_S_MATCH *m) {
+//     free(m);
+// }

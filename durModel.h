@@ -56,4 +56,13 @@ typedef struct dur_s_match {
 
 int dur(DUR_S_MATCH *d);
 
+
+
+
+
 #endif //DUR_DURMODEL_H
+
+
+// static void matchInit(DUR_S_MATCH *m);
+// DUR_S_MATCH *durNew();
+// void dur(DUR_S_MATCH *m);
