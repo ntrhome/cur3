@@ -2,79 +2,68 @@
 #include <time.h>   // for srand, rand
 
 #include "durModel.h"
-#include "durView.h"
+//#include "durView.h"
 
-static void matchInit(DUR_S_MATCH *d) {
-    //DUR_S_MATCH
+static void matchInit(dur_s_match *m) {
     for (int p = 0; p < DUR_PLAYERS; ++p) { //score reset
-        d->score[p] = 0;
+        m->score[p] = 0;
     }
-    //DUR_S_GAME
-    d->game.winner = DUR_NONE;              //winner reset
-    //DUR_S_DESK
+    m->game.winner = DUR_NONE;
     for (int i = 0; i < DUR_CARDS; ++i) {   //desk filling
-        d->game.desk.card [i] = i;
+        m->game.battle.field.desk.card[i] = i;
     }
-    d->stage = DUR_E_STAGE_GAME_INIT;
 }
 
-static void gameInit(DUR_S_MATCH *d) {
-    //DUR_S_GAME
-    //DUR_S_FIGHT
-    if(d->game.winner == DUR_NONE) {    //Жеребьевка (первая игра или ничья).
+static void gameInit(dur_s_game *g) {
+    if(g->winner == DUR_NONE) {    //Жеребьевка (первая игра или ничья).
         srand((int)time(NULL));
-        d->game.winner = rand() % DUR_PLAYERS;
-        d->game.fight.attacker =  d->game.winner;
-        d->game.fight.dealer   = !d->game.winner;
+        g->winner = rand() % DUR_PLAYERS;
+        g->battle.attacker =  g->winner;
+        g->battle.dealer   = !g->winner;
     }
-    //DUR_S_DESK
     srand((int)time(NULL));   //desk shuffle, place, set head and trump
     for(int i = 0; i < DUR_CARDS; ++i) {
-        int depot = d->game.desk.card[i];
+        int depot = g->battle.field.desk.card[i];
         int iRand = rand() % DUR_CARDS;
-        d->game.desk.card[i] = d->game.desk.card[iRand];
-        d->game.desk.card[iRand] = depot;
-        d->game.desk.place[i] = DUR_E_PLACE_DESK;
+        g->battle.field.desk.card[i] = g->battle.field.desk.card[iRand];
+        g->battle.field.desk.card[iRand] = depot;
+        g->battle.field.desk.place[i] = DUR_E_PLACE_DESK;
     }
-    d->game.desk.count = DUR_CARDS;
-    d->game.desk.trump = d->game.desk.card[0] / DUR_RANKS;
-    //DUR_S_HISTORY
-    d->game.history.count = 0;
-    d->stage = DUR_E_STAGE_FIGHT_INIT;
+    g->battle.field.desk.count = DUR_CARDS;
+    g->battle.field.history.count = 0;
 }
 
-static void fightInit(DUR_S_MATCH *d) {
-    int dealerCardCount; //dealing
-    for(int p = 0; p < DUR_PLAYERS; ++p) {
-        dealerCardCount = 0;
-        for(int i = 0; i < DUR_CARDS; ++i) {
-            if(d->game.desk.place[i] == d->game.fight.dealer) {
-                ++dealerCardCount;
+static void history(dur_s_history *h, int desk, int place) {
+    if(h->count < DUR_HISTORY_MAX) {
+        h->desk [h->count] = desk;
+        h->place[h->count] = place;
+        ++h->count;
+    }
+}
+
+static void battleInit(dur_s_battle *b) {
+    int player[DUR_PLAYERS] = {b->dealer, !b->dealer}; //dealing
+    for (int p = 0; p < DUR_PLAYERS; ++p) {
+        int count = 0;
+        int i = DUR_CARDS-1;
+        for (; i >= 0; --i) {
+            if(b->field.desk.place[i] == player[p]) {
+                ++count;
+            } else if(b->field.desk.place[i] == DUR_E_PLACE_DESK) {
+                break;
             }
         }
-        while((dealerCardCount < 6) & (d->game.desk.count > 0)) {
-            //1 - убавляем карту в колоде, отмечаем в place ее передачу игроку dealer
-            --d->game.desk.count;
-            d->game.desk.place[d->game.desk.count] = d->game.fight.dealer; //отмечаем в place ее передачу игроку dealer
-            //2 - увеличиваем текущее число карт у текущего игрока
-            ++dealerCardCount;
-            //3 - заносим в историю
-            d->game.history.desk [d->game.history.count] = d->game.desk.count;
-            d->game.history.place[d->game.history.count] = d->game.fight.dealer;
-            ++d->game.history.count;
-        }
-        ++d->game.fight.dealer; //следующий игрок для получения карт
-        if(d->game.fight.dealer == DUR_PLAYERS) { //корректируем очередность
-            d->game.fight.dealer = 0;
+        for (; i >= 0; --i) {
+            if(count >= 6) break;
+            b->field.desk.place[i] = player[p];
+            ++count;
+            history(&b->field.history, i, player[p]);
         }
     }
-    d->game.fight.dealer = d->game.fight.attacker; //save next fight dealer
-
-    d->game.fight.historyCount = d->game.history.count;
-    d->stage = DUR_E_STAGE_FIGHT_ATTACK;
+    b->dealer = b->attacker;
 }
 
-static void fight(DUR_S_MATCH *d) {
+static void fight(dur_s_match *m) {
     //ПЕРЕХОДИМ В РЕЖИМ ОДНОЗНАЧНО ДВУХ ИГРОКОВ!
     //собираем и анализируем инфу поля
 
@@ -84,23 +73,21 @@ static void fight(DUR_S_MATCH *d) {
     //анализируем баланс битвы, выставляем стейдж
 }
 
-int dur(DUR_S_MATCH *d) {
-    switch (d->stage) {
+void croupier(dur_s_match *m) {
+    switch (m->stage) {
         case DUR_E_STAGE_MATCH_INIT:
-            matchInit(d);
-            //break;
+            matchInit(m);
+            m->stage = DUR_E_STAGE_GAME_INIT;
+            break;
         case DUR_E_STAGE_GAME_INIT:
-            gameInit(d);
-            //break;
-        case DUR_E_STAGE_FIGHT_INIT:
-            fightInit(d);
-            //break;
-        case DUR_E_STAGE_FIGHT:
-            admin(*d);
+            gameInit(&m->game);
+            m->stage = DUR_E_STAGE_BATTLE_INIT;
+            break;
+        case DUR_E_STAGE_BATTLE_INIT:
+            battleInit(&m->game.battle);
 
             break;
     }
-    return d->stage;
 }
 
 // DUR_S_MATCH *durNew() { //do for each new match

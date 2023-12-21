@@ -11,6 +11,6 @@
 //} DUR_S_PLAYER;
 
 
-void admin(DUR_S_MATCH match);
+//void admin(DUR_S_MATCH match);
 
 #endif //DUR_DURVIEW_H

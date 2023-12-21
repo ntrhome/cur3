@@ -1,8 +1,8 @@
 #include "durModel.h"
 
-DUR_S_MATCH d1 = DUR_S_MATCH_INIT;
+dur_s_match m1 = {0};
 
 int main(int argc, char *argv[], char **penv) {
-    dur(&d1);
+    croupier(&m1);
     return 0;
 }
