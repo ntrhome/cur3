@@ -5,5 +5,5 @@
 
 void admin(dur_s_match *m);
 
-void bu(int i);
+void bu(char *s, int i, int j);
 #endif //DUR_DURVIEW_H

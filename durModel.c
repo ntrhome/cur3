@@ -80,6 +80,7 @@ static void croupier(dur_s *d) {
             newGame(&d->match.game);
             d->match.stage = DUR_STAGE_NEW_ROUND;
             //break;
+            admin(&d->match);
         case DUR_STAGE_NEW_ROUND:
             newRound(&d->match.game.round);
             d->match.stage = DUR_STAGE_FIRE;
@@ -87,8 +88,9 @@ static void croupier(dur_s *d) {
         case DUR_STAGE_FIRE:
             fire(&d->match.game.round.fire);
             //break;
+            admin(&d->match);
     }
-    admin(&d->match);
+
 }
 
 void dur() {

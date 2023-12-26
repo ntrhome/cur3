@@ -58,8 +58,8 @@ void admin(dur_s_match *m) {
     printf("========== ===== ===========\n");
 }
 
-void bu(int i) {
-    printf("!!!!!!! BU %d !!!!!!!\n", i);
+void bu(char *s, int i, int j) {
+    printf("!!!!!!! BU !!!!!!!: %s, %d, %d\n", s, i, j);
 }
 
 // = = = = = = = = = = = = = = = = = = = = = = = =
