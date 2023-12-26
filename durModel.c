@@ -39,13 +39,13 @@ static void newGame(dur_s_game *g) {
         g->round.fire.desk.card[iRand] = depot;
         g->round.fire.desk.place[i] = DUR_DESK;
     }
-    g->round.fire.history.count = 0;
     g->round.fire.desk.trump = g->round.fire.desk.card[0] / DUR_RANKS;
     g->round.fire.desk.count = DUR_CARDS; //reset history
+    g->round.fire.history.count = 0;
 }
 
 static void newRound(dur_s_round *r) {
-    int count[DUR_PLAYERS] = {0, 0};
+    int count[DUR_PLAYERS] = {0, 0}; //карт на руках
     int i = DUR_CARDS - 1;
     for (; i >= 0; --i) {
         if(r->fire.desk.place[i] == DUR_DESK) break;
@@ -63,7 +63,7 @@ static void newRound(dur_s_round *r) {
             --r->fire.desk.count;
         }
     }
-    r->dealer = r->attacker;
+    r->dealer = r->attacker; //в следующем раунде первым берет аттакер этого раунда
 }
 
 static void fire(dur_s_fire *f) {
