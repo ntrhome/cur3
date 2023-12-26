@@ -3,6 +3,7 @@
 #include <wchar.h>
 
 #include "durView.h"
+#include "durModel.h"
 
 static wchar_t suits[]   = L"♠♣♦♥";
 static wchar_t cards[]   = L"🂦🂧🂨🂩🂪🂫🂭🂮🂡🃖🃗🃘🃙🃚🃛🃝🃞🃑🃆🃇🃈🃉🃊🃋🃍🃎🃁🂶🂷🂸🂹🂺🂻🂽🂾🂱";
@@ -11,61 +12,55 @@ static char colorRed[]   = "\033[1;31m"; //"1;"=bright - bordo
 static char colorReset[] = "\033[0m";
 static wchar_t places[]  = L"🃏🂬🂼🂢🂣🃒🃓🃂🃃🂲🂳🂤🂥🃔🃕🂠"; //🃟
 
-//void admin(DUR_S_MATCH match) {
-//    setlocale(LC_ALL, "");
-//    printf("=========== ADMIN ===========\n");
-//    printf("| - - - - - match - - - - - - ");
-//    printf("| stage = %2d ", match.stage);
-//    char *s = "";
-//    printf("| score = [");
-//    for(int p = 0; p < DUR_PLAYERS; ++p) {
-//        printf("%s%d", s, match.score[p]);
-//        s=":";
-//    }
-//    printf("]\n");
-//    printf("| - - - - -  game - - - - - - ");
-//    printf("| winner = %d ", match.game.winner);
-//    printf("| dealer = %d ", match.game.fight.dealer);
-//    printf("| attacker = %d\n", match.game.fight.attacker);
-//    printf("| DESK  = ");
-//    char *color;
-//    for(int i=0; i<DUR_CARDS; ++i){
-//        int card = match.game.desk.card[i];
-//        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
-//        printf("%s%lc", color, cards[card]);
-//    }
-//    color = ((match.game.desk.trump / 2) == 0) ? colorWhite : colorRed;
-//    printf("%s (%d) [%s%lc%s]\n", colorReset, match.game.desk.count, color, suits[match.game.desk.trump], colorReset);
-//    printf("| PLACE = ");
-//    for(int i=0; i<DUR_CARDS; ++i){
-//       printf("%lc", places[match.game.desk.place[i]+1]); //"+1" потому как "enum dur_e_place {DUR_E_PLACE_DESK=-1, ...""
-//    }
-//    printf("\n");
-//    printf("| HESK  = ");
-//    for(int i=0; i<match.game.history.count; ++i){
-//        int card = match.game.desk.card[match.game.history.desk[i]];
-//        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
-//        printf("%s%lc", color, cards[card]);
-//    }
-//    printf("%s\n", colorReset);
-//    printf("| HLACE = ");
-//    for(int i=0; i<match.game.history.count; ++i){
-//       printf("%lc", places[match.game.history.place[i]+1]); //"+1" потому как "enum dur_e_place {DUR_E_PLACE_DESK=-1, ...""
-//    }
-//    printf("\n");
-//    printf("========== ===== ===========\n");
-//}
+static void outPack(int *pack, int count, int trump) {
+    char *color;
+    for(int i = 0; i < count; ++i){
+        int card = pack[i];
+        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
+        printf("%s%lc", color, cards[card]);
+    }
+    color = (trump / 2 == 0) ? colorWhite : colorRed;
+    printf("%s (%d) [%s%lc%s]\n", colorReset, count, color, suits[trump], colorReset);
+}
 
+void admin(dur_s_match *m) {
+    setlocale(LC_ALL, "");
+    printf("=========== ADMIN ===========\n");
+    printf("| - MATCH: stage = %d, score = [%d:%d]\n", m->stage, m->score[0], m->score[1]);
+    printf("| - GAME:  winner = %d\n", m->game.winner);
+    printf("| - ROUND: attacker = %d, dealer = %d\n", m->game.round.attacker, m->game.round.dealer);
+    printf("| - FIRE:  \n");
+    printf("| - DESK:  ");
+    char *color;
+    for(int i = 0; i < DUR_CARDS; ++i){
+        int card = m->game.round.fire.desk.card[i];
+        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
+        printf("%s%lc", color, cards[card]);
+    }
+    color = (m->game.round.fire.desk.trump / 2 == 0) ? colorWhite : colorRed;
+    printf("%s (%d) [%s%lc%s]\n", colorReset, m->game.round.fire.desk.count, color, suits[m->game.round.fire.desk.trump], colorReset);
+    printf("|  place:  ");
+    for(int i = 0; i < DUR_CARDS; ++i){
+        printf("%lc", places[m->game.round.fire.desk.place[i]+1]);
+    }
+    printf("\n");
+    printf("| - HISTORY:\n");
+    for(int i = 0; i < m->game.round.fire.history.count; ++i){
+        int card = m->game.round.fire.desk.card[m->game.round.fire.history.desk[i]];
+        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
+        printf("%s%lc", color, cards[card]);
+    }
+    printf("%s (%d)\n", colorReset, m->game.round.fire.history.count);
+    for(int i = 0; i < m->game.round.fire.history.count; ++i){
+        printf("%lc", places[m->game.round.fire.history.place[i]+1]);
+    }
+    printf("\n");
+    printf("========== ===== ===========\n");
+}
 
-
-
-//    int ch;
-//printf("ch = ");
-//fflush(stdout);
-//ch = getchar();
-//printf("%d\n", ch);
-//printf("%c\n", (char) ch);
-
+void bu(int i) {
+    printf("!!!!!!! BU %d !!!!!!!\n", i);
+}
 
 // = = = = = = = = = = = = = = = = = = = = = = = =
 

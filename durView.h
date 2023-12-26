@@ -2,15 +2,8 @@
 #define DUR_DURVIEW_H
 
 #include "durModel.h"
-//
-//typedef struct dur_s_player {
-//    int id; //players id
-//    int isAttacker;
-//    int isDefender;
-//
-//} DUR_S_PLAYER;
 
+void admin(dur_s_match *m);
 
-//void admin(DUR_S_MATCH match);
-
+void bu(int i);
 #endif //DUR_DURVIEW_H
