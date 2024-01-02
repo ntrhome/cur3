@@ -25,7 +25,7 @@ typedef struct DUR_S_HISTORY {
     int count;
 } dur_s_history;
 
-typedef struct DUR_S_FIRE { //один бой, состоящий из пары ударов: атакующего/отбивающего
+typedef struct DUR_S_FIRE { //один удар: атакующий/отбивающий
     dur_s_desk desk;
     dur_s_history history;
 } dur_s_fire;

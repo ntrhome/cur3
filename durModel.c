@@ -15,7 +15,7 @@ static void history(dur_s_history *h, int desk, int place) {
 static void newMatch(dur_s_match *m) {
     m->score[DUR_WHITE] = 0;
     m->score[DUR_BLACK] = 0;
-    for (int i = 0; i < DUR_CARDS; ++i) {
+    for (int i = 0; i < DUR_CARDS; ++i) { //desk filling
         m->game.round.fire.desk.card[i] = i;
     }
     m->game.winner = DUR_NONE;
@@ -30,7 +30,7 @@ static void newGame(dur_s_game *g) {
     }
     g->round.attacker =  g->winner; //ресет атакующего и первого берущего карты
     g->round.dealer   = !g->winner;
-    // - - - - - - - - - - - - - - desk shuffle, reset place
+    // - - - - - - - - - - - - - - desk shuffle, reset place, count, set trump
     srand((int)time(NULL));
     for (int i = 0; i < DUR_CARDS; ++i) {
         int depot = g->round.fire.desk.card[i];
@@ -39,12 +39,12 @@ static void newGame(dur_s_game *g) {
         g->round.fire.desk.card[iRand] = depot;
         g->round.fire.desk.place[i] = DUR_DESK;
     }
+    g->round.fire.desk.count = DUR_CARDS;
     g->round.fire.desk.trump = g->round.fire.desk.card[0] / DUR_RANKS;
-    g->round.fire.desk.count = DUR_CARDS; //reset history
-    g->round.fire.history.count = 0;
+    g->round.fire.history.count = 0; //reset history
 }
 
-static void newRound(dur_s_round *r) {
+static void newRound(dur_s_round *r) { //!
     int count[DUR_PLAYERS] = {0, 0}; //карт на руках
     int i = DUR_CARDS - 1;
     for (; i >= 0; --i) {
@@ -94,8 +94,8 @@ static void croupier(dur_s *d) {
 }
 
 void dur() {
-    dur_s* d = malloc(sizeof(dur_s));
-    d->match.stage = DUR_STAGE_NEW_MATCH;
-    croupier(d);
-    free(d);
+    dur_s* d1 = malloc(sizeof(dur_s));
+    d1->match.stage = DUR_STAGE_NEW_MATCH;
+    croupier(d1); //todo: все dn надо сохранить в dur_s (список, realloc) и авообрабатывать подряд в croupier
+    free(d1);
 }
