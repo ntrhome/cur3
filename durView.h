@@ -3,7 +3,9 @@
 
 #include "durModel.h"
 
-void admin(dur_s_match *m);
-
+#ifdef DUR_DEBUG
+void admin(dur_s *d);
 void bu(char *s, int i, int j);
+#endif //DUR_DEBUG
+
 #endif //DUR_DURVIEW_H
