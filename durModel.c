@@ -6,108 +6,98 @@
 
 static void history(dur_s_history *h, int desk, int place) {
     if(h->count < DUR_HISTORY_MAX) {
-        h->desk [h->count] = desk;
-        h->place[h->count] = place;
-        ++h->count;
+        h->desk [h->count  ] = desk;
+        h->place[h->count++] = place;
     }
 }
 
-static void newMatch(dur_s_match *m) {
-    m->score[DUR_WHITE] = 0;
-    m->score[DUR_BLACK] = 0;
-    for (int i = 0; i < DUR_CARDS; ++i) { //desk filling
-        m->game.round.desk.card[i] = i;
-        m->game.round.desk.place[i] = DUR_DESK; //dbg
-    }
-    m->game.round.desk.head = DUR_CARDS; //dbg
-    m->game.round.desk.trump = m->game.round.desk.card[0] / DUR_RANKS; //dbg
-    m->game.winner = DUR_NONE;
+static void newMatch(dur_s_game *g) { //reset: score, winner, desk
+    g->score[DUR_WHITE] = 0;
+    g->score[DUR_BLACK] = 0;
+    g->winner = DUR_NONE;
+    for (int i = 0; i < DUR_CARDS; ++i) { g->round.field.desk.card[i] = i; } //desk filling
+    g->round.field.stage = DUR_STAGE_NEW_GAME;
 }
 
-static void newGame(dur_s_game *g) {
-    // - - - - - - - - - - - - - - Жеребьевка (первая игра или ничья)
-    if(g->winner == DUR_NONE) {
+static void newGame_AttackerDealer(dur_s_game *g) { //set: attacker, dealer
+    if(g->winner == DUR_NONE) { //жеребьевка (первая игра или ничья)
         srand((int)time(NULL));
-        g->winner = rand() % DUR_PLAYERS;
+        g->round.attacker = rand() % DUR_PLAYERS;
+    } else {
+        g->round.attacker =  g->winner;
     }
-    g->round.attacker =  g->winner; //ресет атакующего и первого берущего карты
-    g->round.dealer   = !g->winner;
-    // - - - - - - - - - - - - - - desk shuffle, reset place, head, set trump
+    g->round.dealer   = !g->round.attacker;
+}
+
+static void newGame_DeskShuffle(dur_s_desk *d) { //set desk
     srand((int)time(NULL));
     for (int i = 0; i < DUR_CARDS; ++i) {
-        int depot = g->round.desk.card[i];
         int iRand = rand() % DUR_CARDS;
-        g->round.desk.card[i] = g->round.desk.card[iRand];
-        g->round.desk.card[iRand] = depot;
-        g->round.desk.place[i] = DUR_DESK;
+        int depot = d->card[iRand];
+        d->card[iRand] = d->card[i];
+        d->card[i] = depot;
+        d->place[i] = DUR_DESK;
     }
-    g->round.desk.head = DUR_CARDS;
-    g->round.desk.trump = g->round.desk.card[0] / DUR_RANKS;
-    g->round.history.count = 0; //reset history
-    g->round.player[DUR_WHITE].count = 0;
-    g->round.player[DUR_BLACK].count = 0;
+    d->head = DUR_CARDS;
+    d->trump = d->card[0] / DUR_RANKS;
 }
 
-static void newRoundDealing(dur_s_round *r, int player) {
-    while((r->desk.head > 0) & (r->player[player].count < DUR_NORMAL)) {
-        --r->desk.head; //desk 2 player
-        r->player[player].desk[r->player[player].count] = r->desk.head;
-        ++r->player[player].count;
-        r->desk.place[r->desk.head] = player; //desk 2 place
-        r->history.desk[r->history.count] = r->desk.head; //desk 2 history
-        r->history.place[r->history.count] = player;
-        ++r->history.count;
+static void newGame(dur_s_game *g) { //set: (attacker, dealer), (desk); reset: players, history
+    newGame_AttackerDealer(g);
+    newGame_DeskShuffle(&g->round.field.desk);
+    g->round.field.player[DUR_WHITE].count = 0; //reset player 0
+    g->round.field.player[DUR_BLACK].count = 0; //reset player 1
+    g->round.field.history.count = 0;           //reset history
+    g->round.field.stage = DUR_STAGE_NEW_ROUND;
+}
+
+static void newRound_Dealing(dur_s_field *f, int p) {
+    while((f->desk.head > 0) & (f->player[p].count < DUR_NORMAL)) {
+        f->player[p].desk[f->player[p].count++] = --f->desk.head; //desk 2 player
+        f->desk.place[f->desk.head] = p;                          //desk 2 place
+        history(&f->history, f->desk.head, p);      //desk 2 history
     }
 }
 
 static void newRound(dur_s_round *r) { //r->desk.head
-    newRoundDealing(r,  r->dealer);
-    newRoundDealing(r, !r->dealer);
+    newRound_Dealing(&r->field,  r->dealer);
+    newRound_Dealing(&r->field, !r->dealer);
     r->dealer = r->attacker; //в следующем раунде первым берет аттакер этого раунда
-    if(r->player[r->attacker].count == 0) {
-        if(r->player[!r->attacker].count == 0) { //gameOver, ничья
-
-        } else { //gameOver, победа r->attacker
-
-        }
-        //todo: gameOver
-    } else if(r->player[!r->attacker].count == 0) {//gameOver, победа !r->attacker
-        //todo: gameOver
-    }
-    //todo: game
-
-
-
+    r->field.historyField = r->field.history.count; //reset field frame
+//    if(r->field.player[r->attacker].count == 0) { //на начало раунда у атакера нет карт
+//        if(r->player[!r->attacker].count == 0) { //gameOver, ничья
+//
+//        } else { //gameOver, победа r->attacker
+//
+//        }
+//        //todo: gameOver
+//    } else if(r->player[!r->attacker].count == 0) {//gameOver, победа !r->attacker
+//        //todo: gameOver
+//    }
+//    //todo: game
 }
 
-
-
-static void croupier(dur_s *d) {
-    switch(d->match.stage) {
+static void croupier(dur_s_game *g) {
+    switch(g->round.field.stage) {
         case DUR_STAGE_NEW_MATCH:
-            newMatch(&d->match);
-            d->match.stage = DUR_STAGE_NEW_GAME;
-            //admin(d);
-            //break; //dbg
+            newMatch(g);
+            //break;
         case DUR_STAGE_NEW_GAME:
-            newGame(&d->match.game);
-            d->match.stage = DUR_STAGE_NEW_ROUND;
+            newGame(g);
             //break;
         case DUR_STAGE_NEW_ROUND:
-            newRound(&d->match.game.round);
-            //d->match.stage = DUR_STAGE_FIRE;
-            admin(d);
+            newRound(&g->round);
+            admin(g);
             //break;
 //        case DUR_STAGE_FIRE:
 //            //fire(&d->match.game.round.fire);
 //            break;
     }
-
 }
 
 void dur() {
-    dur_s* d1 = malloc(sizeof(dur_s));
-    d1->match.stage = DUR_STAGE_NEW_MATCH;
-    croupier(d1); //todo: все dn надо сохранить в dur_s (список, realloc) и авообрабатывать подряд в croupier
-    free(d1);
+    dur_s_game* g1 = malloc(sizeof(dur_s_game));
+    g1->round.field.stage = DUR_STAGE_NEW_MATCH;
+    croupier(g1); //todo: все dn надо сохранить в dur_s (список, realloc) и авообрабатывать подряд в croupier
+    free(g1);
 }

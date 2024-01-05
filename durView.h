@@ -4,7 +4,7 @@
 #include "durModel.h"
 
 #ifdef DUR_DEBUG
-void admin(dur_s *d);
+void admin(dur_s_game *g);
 void bu(char *s, int i, int j);
 #endif //DUR_DEBUG
 
