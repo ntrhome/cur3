@@ -12,8 +12,8 @@ static void history(dur_s_history *h, int desk, int place) {
 }
 
 static void newMatch(dur_s_game *g) { //reset: score, winner, desk
-    g->score[DUR_WHITE] = 0;
-    g->score[DUR_BLACK] = 0;
+    g->score[DUR_LEFT] = 0;
+    g->score[DUR_RIGHT] = 0;
     g->winner = DUR_NONE;
     for (int i = 0; i < DUR_CARDS; ++i) { g->round.field.desk.card[i] = i; } //desk filling
     g->round.field.stage = DUR_STAGE_NEW_GAME;
@@ -38,15 +38,35 @@ static void newGame_DeskShuffle(dur_s_desk *d) { //set desk
         d->card[i] = depot;
         d->place[i] = DUR_DESK;
     }
-    d->head = DUR_CARDS;
     d->trump = d->card[0] / DUR_RANKS;
+    d->head = DUR_CARDS;
+}
+
+static void newGame_DeskShuffle_Clever(dur_s_desk *d) {
+    int suitRepeatMax;
+    do {
+        newGame_DeskShuffle(d);
+        suitRepeatMax = 0;
+        int suits[DUR_SUITS];
+        for (int p = 0; p < DUR_PLAYERS; ++p) {
+            for (int i = 0; i < DUR_SUITS; ++i) { suits[i] = 0; }
+            int base = DUR_CARDS - (1+p) * DUR_NORMAL;
+            for (int i = base; i < base + DUR_NORMAL; ++i) {
+                ++suits[d->card[i] / DUR_RANKS];
+            }
+            for (int i = 0; i < DUR_SUITS; ++i) {
+                if(suitRepeatMax < suits[i]) {suitRepeatMax = suits[i]; }
+            }
+        }
+        //if(suitRepeatMax > 4) bu("!!! ПЕРЕТАСОВЫВАЮ !!! ", suitRepeatMax, 0); //dbg
+    }while(suitRepeatMax > 4); //если какому-то из игроков раздастся больше 4х карт одной масти - перетасовать.
 }
 
 static void newGame(dur_s_game *g) { //set: (attacker, dealer), (desk); reset: players, history
     newGame_AttackerDealer(g);
-    newGame_DeskShuffle(&g->round.field.desk);
-    g->round.field.player[DUR_WHITE].count = 0; //reset player 0
-    g->round.field.player[DUR_BLACK].count = 0; //reset player 1
+    newGame_DeskShuffle_Clever(&g->round.field.desk);
+    g->round.field.player[DUR_LEFT].count = 0; //reset player 0
+    g->round.field.player[DUR_RIGHT].count = 0; //reset player 1
     g->round.field.history.count = 0;           //reset history
     g->round.field.stage = DUR_STAGE_NEW_ROUND;
 }

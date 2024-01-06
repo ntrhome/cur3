@@ -13,10 +13,10 @@ static char *colorSuits[]         = {DUR_COLOR_F256(254),//15
                                     DUR_COLOR_F256(196)};
 static char *suits  = "scdh";
 static char *ranks  = "6789XJQKA";
-static char *places = "+01ABCDEFGHIJKL-";
+static char *places = "+LRABCDEFGHIJKL-";
 static char *colorPlaces[]         = {DUR_COLOR_F256(196),
-                                      DUR_COLOR_F256(244),//7
-                                      DUR_COLOR_F256(254),//15
+                                      DUR_COLOR_F256(4),//LEFT//15//254
+                                      DUR_COLOR_F256(2),//RIGHT//7//244
                                       DUR_COLOR_F256(39),
                                       DUR_COLOR_F256(40),
                                       DUR_COLOR_F256(75),
@@ -30,70 +30,109 @@ static char *colorPlaces[]         = {DUR_COLOR_F256(196),
                                       DUR_COLOR_F256(219),
                                       DUR_COLOR_F256(220),
                                       DUR_COLOR_F256(196)};
+static char *players[]              = {"LEFT ","RIGHT"};
 
 
+static void outPlayer(dur_s_field *f, int player) {
+    for (int i = 0; i < f->player[player].count-1; ++i) { //suit-sorter
+        for (int j = i+1; j < f->player[player].count; ++j) {
+            if(f->desk.card[f->player[player].desk[i]] > f->desk.card[f->player[player].desk[j]]) {
+                int depot = f->player[player].desk[j];
+                f->player[player].desk[j] = f->player[player].desk[i];
+                f->player[player].desk[i] = depot;
+            }
+        }
+    }
+    printf("| - %s%s%s: (%d|%s%c%s)\n", colorPlaces[player + 1], players[player], colorReset, f->player[player].count, colorSuits[f->desk.trump], suits[f->desk.trump], colorReset);
 
-//static void outPlayer(dur_s_round *r, int player) {
-//    char *color;
-//    for (int i = 0; i < r->player[player].count; ++i) {
-//        int card = r->desk.card[r->player[player].desk[i]];
-//        color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
-//        printf("%s%lc ", color, cards[card]); // завершающий пробел нужен для вывода в терминал - там иначе карты с цветом накладываются
-//    }
-//    color = (r->desk.trump / 2 == 0) ? colorWhite : colorRed;
-//    printf("%s(%d/%d) [%s%lc%s]", colorReset, r->player[player].count, DUR_NORMAL, color, suits[r->desk.trump], colorReset);
-//}
-//
+    printf("[");
+    char *s = "";
+    for (int i = 0; i < f->player[player].count; ++i) {
+        int card = f->desk.card[f->player[player].desk[i]];
+        printf("%s%s%c%c%s", s, colorSuits[card / DUR_RANKS], ranks[card % DUR_RANKS], suits[card / DUR_RANKS], colorReset);
+        s = ".";
+    }
+    s = " ";
+    if(f->player[player].count > 16 ) { s = "\n"; }
+    printf("] /%s[", s);
+    for (int i = 0; i < f->player[player].count-1; ++i) { //rank-sorter
+        for (int j = i+1; j < f->player[player].count; ++j) {
+            if(f->desk.card[f->player[player].desk[i]] % DUR_RANKS > f->desk.card[f->player[player].desk[j]] % DUR_RANKS) {
+                int depot = f->player[player].desk[j];
+                f->player[player].desk[j] = f->player[player].desk[i];
+                f->player[player].desk[i] = depot;
+            }
+        }
+    }
+    for (int i = 0; i < f->player[player].count-1; ++i) { //suite correcting
+        for (int j = i+1; j < f->player[player].count; ++j) {
+            if(
+                (f->desk.card[f->player[player].desk[i]] % DUR_RANKS == f->desk.card[f->player[player].desk[j]] % DUR_RANKS)
+                &
+                (f->desk.card[f->player[player].desk[i]] / DUR_RANKS > f->desk.card[f->player[player].desk[j]] / DUR_RANKS)
+            ) {
+                int depot = f->player[player].desk[j];
+                f->player[player].desk[j] = f->player[player].desk[i];
+                f->player[player].desk[i] = depot;
+            }
+        }
+    }
+    s = "";
+    for (int i = 0; i < f->player[player].count; ++i) {
+        int card = f->desk.card[f->player[player].desk[i]];
+        printf("%s%s%c%c%s", s, colorSuits[card / DUR_RANKS], ranks[card % DUR_RANKS], suits[card / DUR_RANKS], colorReset);
+        s = ".";
+    }
+    printf("].\n");
+}
+
 #ifdef DUR_DEBUG
 static void outDesk(dur_s_desk *d) {
-    printf("  [");
+    printf("| - DESK:  (%d|%s%c%s)\n[", d->head, colorSuits[d->trump], suits[d->trump], colorReset);
     char *s = "";
     for(int i = 0; i < DUR_CARDS; ++i){
-        printf("%s%s%s%c%c", colorReset, s, colorSuits[d->card[i] / DUR_RANKS], ranks[d->card[i] % DUR_RANKS], suits[d->card[i] / DUR_RANKS]);
+        printf("%s%s%c%c%s", s, colorSuits[d->card[i] / DUR_RANKS], ranks[d->card[i] % DUR_RANKS], suits[d->card[i] / DUR_RANKS], colorReset);
         s = ".";
     }
-    printf("%s]\n  [",colorReset);
+    printf("]\n[");
     s = "";
     for(int i = 0; i < DUR_CARDS; ++i){
-        printf("%s%s%s%c%c", colorReset, s, colorPlaces[d->place[i] + 1], places[d->place[i] + 1], places[d->place[i] + 1]);
+        printf("%s%s%c%c%s", s, colorPlaces[d->place[i] + 1], places[d->place[i] + 1], places[d->place[i] + 1], colorReset);
         s = ".";
     }
-    printf("%s].\n", colorReset);
+    printf("].\n");
+}
+
+static void outHistory(dur_s_field *f) {
+    printf("| - HISTORY:\n[");
+    char *s = "";
+    for(int i = 0; i < f->history.count; ++i){
+        int card = f->desk.card[f->history.desk[i]];
+        printf("%s%s%c%c%s", s, colorSuits[card / DUR_RANKS], ranks[card % DUR_RANKS], suits[card / DUR_RANKS], colorReset);
+        s = ".";
+    }
+    printf("]\n[");
+    s = "";
+    for(int i = 0; i < f->history.count; ++i){
+        int place = f->history.place[i] + 1;
+        printf("%s%s%c%c%s", s, colorPlaces[place], places[place], places[place], colorReset);
+        s = ".";
+    }
+    printf("].\n");
 }
 
 void admin(dur_s_game *g) {
     setlocale(LC_ALL, "");
     printf("=========== ADMIN ===========\n");
-    printf("|-MATCH: stage = %d, score = [%d:%d].\n", g->round.field.stage, g->score[DUR_WHITE], g->score[DUR_BLACK]);
-    printf("|-GAME:  winner = %d.\n", g->winner);
-    printf("|-ROUND: dealer = %d, attacker = %d.\n", g->round.dealer, g->round.attacker);
-    printf("|-DESK:  (%d/%d) [%s%c%s]\n", g->round.field.desk.head, DUR_CARDS, colorSuits[g->round.field.desk.trump], suits[g->round.field.desk.trump], colorReset);
+    printf("| - MATCH: stage = %d, score = [%d:%d].\n", g->round.field.stage, g->score[DUR_LEFT], g->score[DUR_RIGHT]);
+    printf("| - GAME:  winner = %d.\n", g->winner);
+    printf("| - ROUND: dealer = %d, attacker = %d.\n", g->round.dealer, g->round.attacker);
     outDesk(&g->round.field.desk);
+    outPlayer(&g->round.field, DUR_LEFT);
+    outPlayer(&g->round.field, DUR_RIGHT);
+    outHistory(&g->round.field);
     //ToDo
-//    printf("| - %sWHITE%s: ", colorWHITE, colorReset);
-//    outPlayer(&d->match.game.round, 0);
-//    printf(".\n");
-//    printf("| - %sBLACK%s: ", colorBLACK, colorReset);
-//    outPlayer(&d->match.game.round, 1);
-//    printf(".\n");
-//    printf("| - HISTORY:\n");
-//    for(int i = 0; i < d->match.game.round.history.count; ++i){
-//        int card = d->match.game.round.desk.card[d->match.game.round.history.desk[i]];
-//        char *color = ((card / (2*DUR_RANKS)) == 0) ? colorWhite : colorRed;
-//        printf("%s%lc ", color, cards[card]); // завершающий пробел нужен для вывода в терминал - там иначе карты с цветом накладываются
-//    }
-//    printf("%s.\n", colorReset);
-//    for(int i = 0; i < d->match.game.round.history.count; ++i){
-//        char *color;
-//        switch(d->match.game.round.history.place[i]){
-//            case DUR_WHITE: color = colorWHITE; break;
-//            case DUR_BLACK: color = colorBLACK; break;
-//            default: color = colorGrey;
-//        }
-//        printf("%s%lc ", color, places[d->match.game.round.history.place[i] + 1]);
-//    }
-//    printf("%s.\n", colorReset);
-//
+    //field
     printf("=========== ===== ===========\n");
 }
 
