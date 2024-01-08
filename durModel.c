@@ -3,6 +3,7 @@
 
 #include "durModel.h"
 #include "durView.h"
+#include "durControl.h"
 
 static void history(dur_s_history *h, int desk, int place) {
     if(h->count < DUR_HISTORY_MAX) {
@@ -58,7 +59,7 @@ static void newGame_DeskShuffle_Clever(dur_s_desk *d) {
                 if(suitRepeatMax < suits[i]) {suitRepeatMax = suits[i]; }
             }
         }
-        //if(suitRepeatMax > 4) bu("!!! ПЕРЕТАСОВЫВАЮ !!! ", suitRepeatMax, 0); //dbg
+        //if(suitRepeatMax > 4) dbgBu("!!! ПЕРЕТАСОВЫВАЮ !!! ", suitRepeatMax, 0); //dbg
     }while(suitRepeatMax > 4); //если какому-то из игроков раздастся больше 4х карт одной масти - перетасовать.
 }
 
@@ -83,7 +84,14 @@ static void newRound(dur_s_round *r) { //r->desk.head
     newRound_Dealing(&r->field,  r->dealer);
     newRound_Dealing(&r->field, !r->dealer);
     r->dealer = r->attacker; //в следующем раунде первым берет аттакер этого раунда
-    r->field.historyField = r->field.history.count; //reset field frame
+    r->field.fieldHistory = r->field.history.count; //reset field frame
+    //r->field.fieldStage = DUR_ATTACK_0;
+    r->field.stage = DUR_STAGE_ROUND;
+}
+
+
+
+static void roundA(dur_s_round *r) {
 //    if(r->field.player[r->attacker].count == 0) { //на начало раунда у атакера нет карт
 //        if(r->player[!r->attacker].count == 0) { //gameOver, ничья
 //
@@ -95,6 +103,13 @@ static void newRound(dur_s_round *r) { //r->desk.head
 //        //todo: gameOver
 //    }
 //    //todo: game
+    durView_step(r);
+    int result = durControl_step(r);
+    dbgBu("durControl_step = ", result, 0);
+
+//    if(fieldFrame == 2*DUR_NORMAL) { //fight end
+//
+//    }
 }
 
 static void croupier(dur_s_game *g) {
@@ -107,17 +122,20 @@ static void croupier(dur_s_game *g) {
             //break;
         case DUR_STAGE_NEW_ROUND:
             newRound(&g->round);
-            admin(g);
+            dbgAdmin(g);
             //break;
-//        case DUR_STAGE_FIRE:
-//            //fire(&d->match.game.round.fire);
-//            break;
+        case DUR_STAGE_ROUND:
+            roundA(&g->round);
+            break;
     }
 }
 
+
+
+
 void dur() {
-    dur_s_game* g1 = malloc(sizeof(dur_s_game));
-    g1->round.field.stage = DUR_STAGE_NEW_MATCH;
-    croupier(g1); //todo: все dn надо сохранить в dur_s (список, realloc) и авообрабатывать подряд в croupier
-    free(g1);
+    dur_s_game* games = malloc(sizeof(dur_s_game)); //todo: пока одна, переделать в список
+    games->round.field.stage = DUR_STAGE_NEW_MATCH;
+    croupier(games);
+    free(games);
 }

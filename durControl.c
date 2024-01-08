@@ -1,6 +1,63 @@
+#include <stdio.h> // for getchar()
+#include <ctype.h> // for getchar()
+
 #include "durControl.h"
 
+static char *suits  = "scdh";
+static char *ranks  = "6789XJQKA";
 
+
+static int durControl_step_getCommand() {
+
+
+}
+
+
+int durControl_step(dur_s_round *r) {
+    fflush(stdout);
+    fflush (stdin);
+    char c1 = (char)toupper(getchar());
+    char c2 = (char)tolower(getchar());
+    if(c1 == 'Q' & c2 == 'q') return DUR_QUIT;
+    if(c1 == 'T' & c2 == 't') return DUR_NONE; //take
+    int rank = DUR_BAD;
+    for (int i = 0; i < DUR_RANKS; ++i) {
+        if (c1 == ranks[i]) {
+            rank = i;
+            break;
+        }
+    }
+    if(rank == DUR_BAD) return DUR_BAD;
+    //printf("rank = %d | ", rank);
+    int suit = DUR_BAD;
+    for (int i = 0; i < DUR_SUITS; ++i) {
+        if(c2 == suits[i]) {
+            suit = i;
+            break;
+        }
+    }
+    if(suit == DUR_BAD) return DUR_BAD;
+    //printf("suit = %d | ", suit);
+    int card = DUR_RANKS * suit + rank;
+    //printf("card = %d | ", card);
+    int desk = DUR_BAD;
+    for (int i = 0; i < DUR_CARDS; ++i) {
+        if(card == r->field.desk.card[i]) {
+            desk = i;
+            break;
+        }
+    }
+    if(desk == DUR_BAD) return DUR_ERROR; //dbg assert
+    //printf("desk = %d | ", desk);
+    int fieldFrame = r->field.history.count - r->field.fieldHistory;
+    int player = (fieldFrame % 2) ? !r->attacker : r->attacker;
+    for (int i = 0; i < r->field.player[player].count; ++i) {
+        if(desk == r->field.player[player].desk[i]) {
+            return desk;
+        }
+    }
+    return DUR_WRONG;
+}
 
 
 //#include <stdio.h>
@@ -50,7 +107,8 @@
 
 // int ch;
 // printf("ch = ");
-// fflush(stdout);
+// fflush(stdout); // Сброс буфера вывода
+// fflush (stdin); // Очистка буфера ввода
 // ch = getchar();
 // printf("%d\n", ch);
 // printf("%c\n", (char) ch);
