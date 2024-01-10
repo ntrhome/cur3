@@ -1,5 +1,4 @@
-//#include "durModel.h"
-#include "durView.h"
+#include "durModel.h"
 
 int main(int argc, char *argv[], char *envp[]) {
     dur();

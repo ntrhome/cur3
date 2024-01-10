@@ -5,137 +5,136 @@
 #include "durView.h"
 #include "durControl.h"
 
-static void history(dur_s_history *h, int desk, int place) {
-    if(h->count < DUR_HISTORY_MAX) {
-        h->desk [h->count  ] = desk;
-        h->place[h->count++] = place;
+
+
+static void newMatch_deskInit (sDesk *d) {
+    for (int i = 0; i < ed_cards; ++i) {
+        d->card[i] = i;
     }
 }
-
-static void newMatch(dur_s_game *g) { //reset: score, winner, desk
-    g->score[DUR_LEFT] = 0;
-    g->score[DUR_RIGHT] = 0;
-    g->winner = DUR_NONE;
-    for (int i = 0; i < DUR_CARDS; ++i) { g->round.field.desk.card[i] = i; } //desk filling
-    g->round.field.stage = DUR_STAGE_NEW_GAME;
+static void newMatch_playersInit (sGame *g, char *leftName, char *rightName) {
+    g->left.place = ep_left;
+    g->left.name = leftName;
+    g->left.score = 0;
+    g->right.place = ep_right;
+    g->right.name = rightName;
+    g->right.score = 0;
+    g->winner = NULL; //nullptr //attacker,dealer - rely on C (because needs for dbg only)
 }
-
-static void newGame_AttackerDealer(dur_s_game *g) { //set: attacker, dealer
-    if(g->winner == DUR_NONE) { //жеребьевка (первая игра или ничья)
-        srand((int)time(NULL));
-        g->round.attacker = rand() % DUR_PLAYERS;
-    } else {
-        g->round.attacker =  g->winner;
-    }
-    g->round.dealer   = !g->round.attacker;
+static sGame *newMatch(char *leftName, char *rightName) {
+    sGame *g = malloc(sizeof(sGame));
+    newMatch_deskInit(&g->desk);
+    newMatch_playersInit(g, leftName, rightName);
+    g->stage = es_newGame;
+    return g;
 }
-
-static void newGame_DeskShuffle(dur_s_desk *d) { //set desk
+static void newGame_deskShuffle(sDesk *d) {
     srand((int)time(NULL));
-    for (int i = 0; i < DUR_CARDS; ++i) {
-        int iRand = rand() % DUR_CARDS;
-        int depot = d->card[iRand];
-        d->card[iRand] = d->card[i];
-        d->card[i] = depot;
-        d->place[i] = DUR_DESK;
-    }
-    d->trump = d->card[0] / DUR_RANKS;
-    d->head = DUR_CARDS;
-}
-
-static void newGame_DeskShuffle_Clever(dur_s_desk *d) {
-    int suitRepeatMax;
+    int flReshuffle;
     do {
-        newGame_DeskShuffle(d);
-        suitRepeatMax = 0;
-        int suits[DUR_SUITS];
-        for (int p = 0; p < DUR_PLAYERS; ++p) {
-            for (int i = 0; i < DUR_SUITS; ++i) { suits[i] = 0; }
-            int base = DUR_CARDS - (1+p) * DUR_NORMAL;
-            for (int i = base; i < base + DUR_NORMAL; ++i) {
-                ++suits[d->card[i] / DUR_RANKS];
-            }
-            for (int i = 0; i < DUR_SUITS; ++i) {
-                if(suitRepeatMax < suits[i]) {suitRepeatMax = suits[i]; }
+        flReshuffle = 0;
+        for (int i = 0; i < ed_cards; ++i) {
+            int r = rand() % ed_cards;
+            int depot = d->card[r];
+            d->card[r] = d->card[i];
+            d->card[i] = depot;
+        }
+        //test (if there are more than 4 same suit in one hand - Reshuffle)
+        int cases [2 * ed_suits] = {0,0,0,0,0,0,0,0};
+        int base = 0;
+        for (int i = ed_cards - 2 * ed_normal; i < ed_cards; ++i) {
+            if(i == ed_cards - ed_normal) base = 4;
+            ++cases[d->card[i] / ed_ranks + base];
+        }
+        for (int c = 0; c < 2 * ed_suits; ++c) {
+            if(cases[c] > 4) {
+                flReshuffle = 1;
+                break;
             }
         }
-        //if(suitRepeatMax > 4) dbgBu("!!! ПЕРЕТАСОВЫВАЮ !!! ", suitRepeatMax, 0); //dbg
-    }while(suitRepeatMax > 4); //если какому-то из игроков раздастся больше 4х карт одной масти - перетасовать.
+    } while (flReshuffle);
+    d->trump = d->card[0] / ed_ranks;
+    d->count = ed_cards;
+}
+static void newGame_playersTurn(sGame *g) {
+    if(g->winner == NULL) { //drawing (first or drawn game)
+        srand((int)time(NULL));
+        g->attacker = (rand() % ed_players) ? &g->right : &g->left;
+    } else {
+        g->attacker = g->winner;
+    }
+    g->dealer = g->attacker;
+}
+static void newGame(sGame *g) {
+    newGame_deskShuffle(&g->desk);
+    g->left.count = 0;
+    g->right.count = 0;
+    newGame_playersTurn(g);
+    g->history.count = 0;
+    //g->stage = es_newFight;
 }
 
-static void newGame(dur_s_game *g) { //set: (attacker, dealer), (desk); reset: players, history
-    newGame_AttackerDealer(g);
-    newGame_DeskShuffle_Clever(&g->round.field.desk);
-    g->round.field.player[DUR_LEFT].count = 0; //reset player 0
-    g->round.field.player[DUR_RIGHT].count = 0; //reset player 1
-    g->round.field.history.count = 0;           //reset history
-    g->round.field.stage = DUR_STAGE_NEW_ROUND;
+//static sPlayer *other(sGame *g, sPlayer *one) {
+//    return (one->place) ? &g->left : &g->right;
+//}
+static void newFight_Dealing(sGame *g,  sPlayer *p) {
+    while(g->desk.count > 0 & p->count < ed_normal) {
+        p->desk[p->count++] = --g->desk.count;
+        g->history.desk[g->history.count] = g->desk.count;
+        g->history.place[g->history.count++] = p->place;
+    }
+}
+static void newFight(sGame *g) {
+    newFight_Dealing(g, g->dealer);
+    newFight_Dealing(g, (g->dealer->place) ? &g->left : &g->right);
+
+    g->attack.count = 0;
+    g->defend.count = 0;
+    //g->stage = es_fight;
 }
 
-static void newRound_Dealing(dur_s_field *f, int p) {
-    while((f->desk.head > 0) & (f->player[p].count < DUR_NORMAL)) {
-        f->player[p].desk[f->player[p].count++] = --f->desk.head; //desk 2 player
-        f->desk.place[f->desk.head] = p;                          //desk 2 place
-        history(&f->history, f->desk.head, p);      //desk 2 history
+static void fight_defended(sGame *g) {}
+static void fight_attack(sGame *g) {
+    // todo: далее ориентир на виев/контрол - ставим подробный стейдж (атака-виев), по которому поток виева отрпортует своим стейджем (атака-виев-показано).
+    // Теперь ставим контрол-стейдж (атака-контрол), ожидаем рапорт контрол-потока (атака-контрол-получено) - контрол сам проверяет ввод на осмысленность/приемлемость и выдает полученное.
+    // Далее прописываем это дело в историю (надо, ибо учебный анализ ходов) и в файт, и переходим к дефенду.
+    // Попутно анализируем наличие карт и команды Qq (Tt), перепрыгивая по ситуации в завершающие файт/гейм стейджи.
+}
+static void fight_defend(sGame *g) {}
+static void fight_defeat(sGame *g) {}
+
+static void fight(sGame *g) {
+    if(g->defend.count == ed_normal) {
+        fight_defended(g);
+    } else if(g->attack.count == g->defend.count) {
+        fight_attack(g);
+    } else {
+        fight_defend(g);
     }
 }
 
-static void newRound(dur_s_round *r) { //r->desk.head
-    newRound_Dealing(&r->field,  r->dealer);
-    newRound_Dealing(&r->field, !r->dealer);
-    r->dealer = r->attacker; //в следующем раунде первым берет аттакер этого раунда
-    r->field.fieldHistory = r->field.history.count; //reset field frame
-    //r->field.fieldStage = DUR_ATTACK_0;
-    r->field.stage = DUR_STAGE_ROUND;
-}
+void croupier(sGame *g) {
+    switch (g->stage) {
+    case es_newGame:
+        newGame(g);
+    //break;
+    case es_newFight:
+        newFight(g);
+    //break;
+    case es_fight:
+       fight(g);
+        vg(g);
+    //break;
 
 
-
-static void roundA(dur_s_round *r) {
-//    if(r->field.player[r->attacker].count == 0) { //на начало раунда у атакера нет карт
-//        if(r->player[!r->attacker].count == 0) { //gameOver, ничья
-//
-//        } else { //gameOver, победа r->attacker
-//
-//        }
-//        //todo: gameOver
-//    } else if(r->player[!r->attacker].count == 0) {//gameOver, победа !r->attacker
-//        //todo: gameOver
-//    }
-//    //todo: game
-    durView_step(r);
-    int result = durControl_step(r);
-    dbgBu("durControl_step = ", result, 0);
-
-//    if(fieldFrame == 2*DUR_NORMAL) { //fight end
-//
-//    }
-}
-
-static void croupier(dur_s_game *g) {
-    switch(g->round.field.stage) {
-        case DUR_STAGE_NEW_MATCH:
-            newMatch(g);
-            //break;
-        case DUR_STAGE_NEW_GAME:
-            newGame(g);
-            //break;
-        case DUR_STAGE_NEW_ROUND:
-            newRound(&g->round);
-            dbgAdmin(g);
-            //break;
-        case DUR_STAGE_ROUND:
-            roundA(&g->round);
-            break;
     }
 }
-
-
-
 
 void dur() {
-    dur_s_game* games = malloc(sizeof(dur_s_game)); //todo: пока одна, переделать в список
-    games->round.field.stage = DUR_STAGE_NEW_MATCH;
-    croupier(games);
-    free(games);
+    sGame *g1 = newMatch("Left", "Right");
+    croupier(g1);
+
+
+   free(g1);
 }
+

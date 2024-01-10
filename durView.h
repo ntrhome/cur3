@@ -3,11 +3,8 @@
 
 #include "durModel.h"
 
-void durView_step(dur_s_round *r);
-
-#ifdef DUR_DEBUG
-void dbgAdmin(dur_s_game *g);
-void dbgBu(char *s, int i, int j);
-#endif //DUR_DEBUG
+void vg(sGame *g);
+void v(char *s, int i);
+void vd(sDesk *d);
 
 #endif //DUR_DURVIEW_H
