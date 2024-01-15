@@ -10,4 +10,5 @@ add_executable(dur main.c
         durView.c
         durView.h
         durControl.c
-        durControl.h)
+        durControl.h
+        test.c)

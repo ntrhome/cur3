@@ -7,26 +7,24 @@
 
 
 
-static void newMatch_deskInit (sDesk *d) {
+static void newBoard_deskInit (sDesk *d) {
     for (int i = 0; i < ed_cards; ++i) {
         d->card[i] = i;
     }
 }
-static void newMatch_playersInit (sGame *g, char *leftName, char *rightName) {
-    g->left.place = ep_left;
-    g->left.name = leftName;
-    g->left.score = 0;
-    g->right.place = ep_right;
-    g->right.name = rightName;
-    g->right.score = 0;
-    g->winner = NULL; //nullptr //attacker,dealer - rely on C (because needs for dbg only)
+static void newBoard_playerInit (sPlayer *p, ep place, char *name) {
+    p->place = place;
+    p->name = name;
+    p->score = 0;
 }
-static sGame *newMatch(char *leftName, char *rightName) {
-    sGame *g = malloc(sizeof(sGame));
-    newMatch_deskInit(&g->desk);
-    newMatch_playersInit(g, leftName, rightName);
-    g->stage = es_newGame;
-    return g;
+static sBoard *newBoard(char *leftName, char *rightName) {
+    sBoard *b = malloc(sizeof(sBoard));
+    newBoard_deskInit(&b->desk);
+    newBoard_playerInit(&b->left, ep_left, leftName);
+    newBoard_playerInit(&b->right, ep_right, rightName);
+    b->winner = NULL;
+    b->stage = es_newGame;
+    return b;
 }
 static void newGame_deskShuffle(sDesk *d) {
     srand((int)time(NULL));
@@ -40,14 +38,11 @@ static void newGame_deskShuffle(sDesk *d) {
             d->card[i] = depot;
         }
         //test (if there are more than 4 same suit in one hand - Reshuffle)
-        int cases [2 * ed_suits] = {0,0,0,0,0,0,0,0};
+        int cases [ed_players * ed_suits] = {0,0,0,0,0,0,0,0}; //for 2 hands
         int base = 0;
-        for (int i = ed_cards - 2 * ed_normal; i < ed_cards; ++i) {
+        for (int i = ed_cards - ed_players * ed_normal; i < ed_cards; ++i) {
             if(i == ed_cards - ed_normal) base = 4;
-            ++cases[d->card[i] / ed_ranks + base];
-        }
-        for (int c = 0; c < 2 * ed_suits; ++c) {
-            if(cases[c] > 4) {
+            if(++cases[d->card[i] / ed_ranks + base] > 4) {
                 flReshuffle = 1;
                 break;
             }
@@ -56,74 +51,70 @@ static void newGame_deskShuffle(sDesk *d) {
     d->trump = d->card[0] / ed_ranks;
     d->count = ed_cards;
 }
-static void newGame_playersTurn(sGame *g) {
-    if(g->winner == NULL) { //drawing (first or drawn game)
+static void newGame_playersTurn(sBoard *b) {
+    if(b->winner == NULL) { //drawing (first or drawn game)
         srand((int)time(NULL));
-        g->attacker = (rand() % ed_players) ? &g->right : &g->left;
+        b->attacker = (rand() % ed_players) ? &b->right : &b->left;
     } else {
-        g->attacker = g->winner;
+        b->attacker = b->winner;
     }
-    g->dealer = g->attacker;
+    b->dealer = b->attacker;
 }
-static void newGame(sGame *g) {
-    newGame_deskShuffle(&g->desk);
-    g->left.count = 0;
-    g->right.count = 0;
-    newGame_playersTurn(g);
-    g->history.count = 0;
-    //g->stage = es_newFight;
+static void newGame(sBoard *b) {
+    newGame_deskShuffle(&b->desk);
+    b->left.count = 0;
+    b->right.count = 0;
+    newGame_playersTurn(b);
+    b->history.count = 0;
+    b->stage = es_newFight;
 }
 
-//static sPlayer *other(sGame *g, sPlayer *one) {
-//    return (one->place) ? &g->left : &g->right;
-//}
-static void newFight_Dealing(sGame *g,  sPlayer *p) {
-    while(g->desk.count > 0 & p->count < ed_normal) {
-        p->desk[p->count++] = --g->desk.count;
-        g->history.desk[g->history.count] = g->desk.count;
-        g->history.place[g->history.count++] = p->place;
+static void newFight_Dealing(sBoard *b,  sPlayer *p) {
+    while(b->desk.count > 0 & p->count < ed_normal) {
+        p->desk[p->count++] = --b->desk.count;
+        b->history.desk[b->history.count] = b->desk.count;
+        b->history.place[b->history.count++] = p->place;
     }
 }
-static void newFight(sGame *g) {
-    newFight_Dealing(g, g->dealer);
-    newFight_Dealing(g, (g->dealer->place) ? &g->left : &g->right);
-
-    g->attack.count = 0;
-    g->defend.count = 0;
-    //g->stage = es_fight;
+static void newFight(sBoard *b) {
+    newFight_Dealing(b, b->dealer);
+    newFight_Dealing(b, (b->dealer->place) ? &b->left : &b->right);
+    b->attack.count = 0;
+    b->defend.count = 0;
+    b->stage = es_fight;
 }
 
-static void fight_defended(sGame *g) {}
-static void fight_attack(sGame *g) {
+static void fight_defended(sBoard *b) {}
+static void fight_attack(sBoard *b) {
     // todo: далее ориентир на виев/контрол - ставим подробный стейдж (атака-виев), по которому поток виева отрпортует своим стейджем (атака-виев-показано).
     // Теперь ставим контрол-стейдж (атака-контрол), ожидаем рапорт контрол-потока (атака-контрол-получено) - контрол сам проверяет ввод на осмысленность/приемлемость и выдает полученное.
     // Далее прописываем это дело в историю (надо, ибо учебный анализ ходов) и в файт, и переходим к дефенду.
     // Попутно анализируем наличие карт и команды Qq (Tt), перепрыгивая по ситуации в завершающие файт/гейм стейджи.
 }
-static void fight_defend(sGame *g) {}
-static void fight_defeat(sGame *g) {}
+static void fight_defend(sBoard *b) {}
+static void fight_defeat(sBoard *b) {}
 
-static void fight(sGame *g) {
-    if(g->defend.count == ed_normal) {
-        fight_defended(g);
-    } else if(g->attack.count == g->defend.count) {
-        fight_attack(g);
-    } else {
-        fight_defend(g);
-    }
-}
+//static void fight(sBoard *b) {
+//    if(g->defend.count == ed_normal) {
+//        fight_defended(g);
+//    } else if(g->attack.count == g->defend.count) {
+//        fight_attack(g);
+//    } else {
+//        fight_defend(g);
+//    }
+//}
 
-void croupier(sGame *g) {
-    switch (g->stage) {
+void croupier(sBoard *b) {
+    switch (b->stage) {
     case es_newGame:
-        newGame(g);
+        newGame(b);
     //break;
     case es_newFight:
-        newFight(g);
+        newFight(b);
     //break;
     case es_fight:
-       fight(g);
-        vg(g);
+       //fight(g);
+        vb(b);
     //break;
 
 
@@ -131,10 +122,8 @@ void croupier(sGame *g) {
 }
 
 void dur() {
-    sGame *g1 = newMatch("Left", "Right");
-    croupier(g1);
-
-
-   free(g1);
+    sBoard *b1 = newBoard("Left", "Right");
+    croupier(b1);
+    free(b1);
 }
 

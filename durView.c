@@ -80,14 +80,14 @@ static void v_desk(sDesk *d) {
     printf("].\n");
 }
 
-void vg(sGame *g) {
-    printf("= = = = = = = = = = = = v = = = = = = = = = = = (match_id = %X)\n", g);
-    printf("Score:           [ %d : %d ]\n", g->left.score, g->right.score);
-    durView_outPlayer(&g->left, &g->desk);
-    durView_outPlayer(&g->right, &g->desk);
-    char *s = "NULL";
-    printf("winner->%s, attacker->%s, dealer->%s\n", (g->winner == NULL)?s:g->winner->name, (g->attacker == NULL)?s:g->attacker->name, (g->dealer == NULL)?s:g->dealer->name);
-    v_desk(&g->desk);
+void vb(sBoard *b) {
+    printf("= = = = = = = = = = = = vb = = = = = = = = = = = (match_id = %p)\n", b);
+    v_desk(&b->desk);
+    printf("Score:           [ %d : %d ]\n", b->left.score, b->right.score);
+    durView_outPlayer(&b->left, &b->desk);
+    durView_outPlayer(&b->right, &b->desk);
+    char *s = "Nemo";
+    printf("winner->%s, attacker->%s, dealer->%s\n", (b->winner == NULL)?s:b->winner->name, (b->attacker == NULL)?s:b->attacker->name, (b->dealer == NULL)?s:b->dealer->name);
 
 
 

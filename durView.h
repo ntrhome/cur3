@@ -3,7 +3,7 @@
 
 #include "durModel.h"
 
-void vg(sGame *g);
+void vb(sBoard *b);
 void v(char *s, int i);
 void vd(sDesk *d);
 
