@@ -3,8 +3,10 @@
 
 #include "durModel.h"
 
-void vb(sBoard *b);
-void v(char *s, int i);
-void vd(sDesk *d);
+void durView(sBoard *b);
+
+#ifdef DUR_DEBUG
+void durdbgViewBoard(sBoard *b);
+#endif //DUR_DEBUG
 
 #endif //DUR_DURVIEW_H

@@ -30,15 +30,15 @@ static char *colorPlaces[] = {
         DUR_COLOR_F256(196)
 };
 
-static void durView_outPlayerDesk(sPlayer *p, sDesk *d) {
-    char *s = "";
-    for (int i = 0; i < p->count; ++i) {
-        int card = d->card[p->desk[i]];
-        printf("%s%s%c%c%s", s, colorSuits[card / ed_ranks], ranks[card % ed_ranks], suits[card / ed_ranks], colorReset);
-        s = ".";
-    }
+void durView(sBoard *b) {
+    printf("durView\n");
+//    switch (b->stage) {
+//        case es_attackView:
+//            break;
+//    }
 }
-static void durView_outPlayer(sPlayer *p, sDesk *d) {
+
+static void durViewPlayer(sPlayer *p, sDesk *d) {
     printf("Player '%-5s':  (%2d) [%s%c%s]\n[", p->name, p->count, colorSuits[d->trump], suits[d->trump], colorReset);
     for (int i = 0; i < p->count-1; ++i) { //suit-sorter
         for (int j = i+1; j < p->count; ++j) {
@@ -70,7 +70,8 @@ static void durView_outPlayer(sPlayer *p, sDesk *d) {
 }
 
 #ifdef DUR_DEBUG
-static void v_desk(sDesk *d) {
+
+static void durdbgViewDesk(sDesk *d) {
     printf("Desk:            (%2d) [%s%c%s]\n[", d->count, colorSuits[d->trump], suits[d->trump], colorReset);
     char *s = "";
     for(int i = 0; i < ed_cards; ++i){
@@ -80,22 +81,30 @@ static void v_desk(sDesk *d) {
     printf("].\n");
 }
 
-void vb(sBoard *b) {
-    printf("= = = = = = = = = = = = vb = = = = = = = = = = = (match_id = %p)\n", b);
-    v_desk(&b->desk);
-    printf("Score:           [ %d : %d ]\n", b->left.score, b->right.score);
-    durView_outPlayer(&b->left, &b->desk);
-    durView_outPlayer(&b->right, &b->desk);
-    char *s = "Nemo";
-    printf("winner->%s, attacker->%s, dealer->%s\n", (b->winner == NULL)?s:b->winner->name, (b->attacker == NULL)?s:b->attacker->name, (b->dealer == NULL)?s:b->dealer->name);
+void durdbgViewBoard(sBoard *b) {
+    printf("= = = = = = = = = = = = dur_dbg_viewBoard = = = = = = = = = = = (match_id = %p)\n", b);
+    durdbgViewDesk(&b->desk);
+    durViewPlayer(&b->left, &b->desk);
+    durViewPlayer(&b->right, &b->desk);
+//    printf("Score:           [ %d : %d ]\n", b->left.score, b->right.score);
+//    durView_outPlayer(&b->left, &b->desk);
+//    durView_outPlayer(&b->right, &b->desk);
+//    char *s = "Nemo";
+//    printf("winner->%s, attacker->%s, dealer->%s\n", (b->winner == NULL)?s:b->winner->name, (b->attacker == NULL)?s:b->attacker->name, (b->dealer == NULL)?s:b->dealer->name);
 
 
 
 }
-void v(char *s, int i) { printf("!!! %s, %d.\n", s, i); }
-void vd(sDesk *d) {
-    v_desk(d);
-}
+
+
+//static void durView_outPlayerDesk(sPlayer *p, sDesk *d) {
+//    char *s = "";
+//    for (int i = 0; i < p->count; ++i) {
+//        int card = d->card[p->desk[i]];
+//        printf("%s%s%c%c%s", s, colorSuits[card / ed_ranks], ranks[card % ed_ranks], suits[card / ed_ranks], colorReset);
+//        s = ".";
+//    }
+//}
 
 #endif //DUR_DEBUG
 
