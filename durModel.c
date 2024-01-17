@@ -5,19 +5,24 @@
 #include "durView.h"
 #include "durControl.h"
 
+#include <stdio.h>
+
 static sBoard *newBoard() {
     sBoard *b = malloc(sizeof(sBoard));
-    b->score[ep_left] = 0;
-    b->score[ep_right] = 0;
     for (int i = 0; i < ed_cards; ++i) b->desk.card[i] = i; //desk filling
-    b->winner = ep_unknown;
+    b->left.score = 0;
+    b->right.score = 0;
+    b->left.place = ep_left;
+    b->right.place = ep_right;
+    b->winner = NULL;
     b->stage = es_newGame;
     return b;
 }
+
 static void newGame_deskShuffle(sDesk *d) {
     srand((int)time(NULL));
     int flReshuffle;
-    d->number = ed_cards - ed_players * ed_normal; //after first dealing
+    d->count = ed_cards;
     do {
         flReshuffle = 0;
         for (int i = 0; i < ed_cards; ++i) {
@@ -28,9 +33,9 @@ static void newGame_deskShuffle(sDesk *d) {
         }
         //test (if there are more than 4 same suit in one hand - Reshuffle)
         int cases [ed_players * ed_suits] = {0,0,0,0,0,0,0,0}; //for 2 hands
-        int base = 0;
-        for (int i = d->number; i < ed_cards; ++i) { //test the cards intended for first dealing
-            if (i == ed_cards - ed_normal) base = 4;
+        int base = 0; //left
+        for (int i = ed_talon; i < ed_cards; ++i) { //test the cards intended for first dealing
+            if (i == ed_talon + ed_normal) base = 4;
             if (++cases[d->card[i] / ed_ranks + base] > 4) { //more than 4 card of the same suit
                 flReshuffle = 1;
                 break;
@@ -39,16 +44,10 @@ static void newGame_deskShuffle(sDesk *d) {
     } while (flReshuffle);
     d->trump = d->card[0] / ed_ranks;
 }
-static void newGame_deskPlace(sDesk *d) { //and first dealing (left, right)
-    int i = 0;
-    for (; i < d->number; ++i)           d->place[i] = ep_desk;
-    for (; i < d->number+ed_normal; ++i) d->place[i] = ep_left;
-    for (; i < ed_cards; ++i)            d->place[i] = ep_right;
-}
 static void newGame_playersTurn(sBoard *b) {
-    if(b->winner == ep_unknown) { //drawing (first or drawn game)
+    if(b->winner == NULL) { //drawing (first or drawn game)
         srand((int)time(NULL));
-        b->attacker = (rand() % ed_players) ? ep_right : ep_left;
+        b->attacker = (rand() % ed_players) ? &b->right : &b->left;
     } else {
         b->attacker = b->winner;
     }
@@ -56,34 +55,29 @@ static void newGame_playersTurn(sBoard *b) {
 }
 static void newGame(sBoard *b) {
     newGame_deskShuffle(&b->desk);
-    newGame_deskPlace(&b->desk);
+    b->left.count = 0;
+    b->right.count = 0;
     newGame_playersTurn(b);
-    b->history.number = 0;
+    b->history.count = 0;
     b->stage = es_newFight;
 }
 
 static void history(sHistory *h, int desk, ep place) {
-    h->desk[h->number] = desk;
-    h->place[h->number++] = place;
+    h->desk[h->count] = desk;
+    h->place[h->count++] = place;
 }
-static void newFight_Dealing(sBoard *b) {
-    if (b->desk.number > 0) {
-        int dealer = b->dealer;
-        for (int p = 0; p < ed_players; ++p) {
-            int count = 0;
-            for (int i = b->desk.number; i < ed_cards; ++i) if (b->desk.place[i] == dealer) ++count;
-            while (b->desk.number > 0 & count++ < ed_normal) {
-                b->desk.place[--b->desk.number] = dealer;
-                history(&b->history, b->desk.number, dealer);
-            }
-            dealer != dealer;
-        }
-        b->dealer = b->attacker;
+static void newFight_Dealing(sBoard *b, sPlayer *dealer) {
+    while (b->desk.count > 0 & dealer->count < ed_normal) {
+        dealer->desk[dealer->count++] = --b->desk.count;
+        history(&b->history, b->desk.count, dealer->place);
     }
 }
 static void newFight(sBoard *b) {
-    newFight_Dealing(b);
-    b->history.frame = b->history.number;
+    newFight_Dealing(b, b->dealer);
+    newFight_Dealing(b, (b->dealer == &b->right) ? &b->left : &b->right);
+    b->dealer = b->attacker;
+    b->attack.count = 0;
+    b->defend.count = 0;
     b->stage = es_attackView;
 }
 
@@ -95,10 +89,10 @@ void durModel(sBoard *b) {
     case es_newFight:
         newFight(b);
         durDbgViewBoard(b); //dbg
-    //break;
-//    case es_fight:
-//       //fight(g);
-    //break;
+//    //break;
+////    case es_fight:
+////       //fight(g);
+//    //break;
     }
 }
 
