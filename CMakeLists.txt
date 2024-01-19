@@ -11,5 +11,4 @@ add_executable(dur main.c
         durView.h
         durControl.c
         durControl.h
-        main.h
 )
