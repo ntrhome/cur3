@@ -6,7 +6,7 @@
 void durView(sBoard *b);
 
 #ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
-void durDbgViewBoard(sBoard *b);
+// void durDbgViewBoard(sBoard *b);
 #endif //DUR_DEBUG // ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ]
 
 #endif //DUR_DURVIEW_H
