@@ -55,7 +55,7 @@ static void newGame_setAttackerDealer(sBoard *b) {
     } else {
         b->field.attacker = b->field.winner;
     }
-    b->field.dealer = b->field.attacker;
+    b->field.dealer = b->field.attacker; //to reduce history it possible to assign permanently &b->left (with implementation of first dealing)
 }
 static void newGame(sBoard *b) {
     b->field.trump = newGame_shuffleDesk(&b->desk);
@@ -78,7 +78,7 @@ static void newFight_dealing(sBoard *b) {
 }
 static void newFight(sBoard *b) {
     newFight_dealing(b);
-    b->field.dealer = (b->field.dealer == &b->left) ? &b->right : &b->left;
+    b->field.dealer = (b->field.dealer->place) ? &b->left : &b->right;
     newFight_dealing(b);
     b->field.dealer = b->field.attacker; //for next dealing
     b->field.attack.count = 0;
@@ -95,6 +95,7 @@ void durModel(sBoard *b) {
         newFight(b);
 //        break;
     case es_attack:
+        ;
 //        attack();
 //        break;
     }

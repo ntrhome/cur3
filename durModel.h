@@ -20,7 +20,6 @@ typedef struct {
     int score;
     int count;
     int card [ed_cards];
-    sField *f;
 } sPlayer;
 
 typedef struct {
