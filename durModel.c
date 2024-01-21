@@ -17,7 +17,7 @@ static sBoard *newBoard() {
     return b;
 }
 
-static int newGame_shuffleDesk(sDesk *d) { //return trump (suit of trump)
+static int newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
     srand((int)time(NULL));
     d->count = ed_cards;
     int flReshuffle;
@@ -29,10 +29,10 @@ static int newGame_shuffleDesk(sDesk *d) { //return trump (suit of trump)
             d->card[r] = d->card[position];
             d->card[position] = depot;
         }
-        int suit[ed_suits]; //test (if there are more than 4 same suit in one hand - Reshuffle)
+        int suit[ed_suits]; //test (if there are more than 4 same suits in one hand - Reshuffle)
         for (int position = ed_talon; position < ed_cards; ++position) { //test the cards intended for first dealing
             if (position == ed_talon || position == ed_talon + ed_normal) { suit[0]=0; suit[1]=0; suit[2]=0; suit[3]=0; }
-            if (++suit[d->card[position] / ed_ranks] > 4) { //more than 4 card of the same suit
+            if (++suit[d->card[position] / ed_ranks] > 4) { //more than 4 card of the same suits
                 flReshuffle = 1;
                 break;
             }
@@ -46,7 +46,7 @@ static int newGame_shuffleDesk(sDesk *d) { //return trump (suit of trump)
             }
         }
     }
-    return d->card[0] / ed_ranks; //suit of trump
+    return d->card[0] / ed_ranks; //suits of trump
 }
 static void newGame_setAttackerDealer(sBoard *b) {
     if(b->field.winner == NULL) { //drawing (first or drawn game)
@@ -86,6 +86,12 @@ static void newFight(sBoard *b) {
     b->stage = es_attack;
 }
 
+static void attack(sBoard *b) {
+    //cheks
+    b->field.player = b->field.attacker;
+    b->stage = es_attackView;
+}
+
 void durModel(sBoard *b) {
     switch (b->stage) {
     case es_newGame:
@@ -95,9 +101,12 @@ void durModel(sBoard *b) {
         newFight(b);
 //        break;
     case es_attack:
-        ;
+        attack(b);
 //        attack();
-//        break;
+        break;
+    case es_cmd_quit:
+        ;
+        exit(0);
     }
     durDbgView_board(b); //dbg
 }
