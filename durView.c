@@ -9,24 +9,6 @@ static const char *const colorSuit[] = {
     DUR_COLOR_F256(208),
     DUR_COLOR_F256(196)
 };
-//static const char *const colorPlace[] = {
-//    DUR_COLOR_F256(4),//LEFT//15//254
-//    DUR_COLOR_F256(2),//RIGHT//7//244
-//    DUR_COLOR_F256(39),//
-//    DUR_COLOR_F256(40),//
-//    DUR_COLOR_F256(75),//
-//    DUR_COLOR_F256(76),//
-//    DUR_COLOR_F256(111),//
-//    DUR_COLOR_F256(112),//
-//    DUR_COLOR_F256(147),//
-//    DUR_COLOR_F256(148),//
-//    DUR_COLOR_F256(183),//
-//    DUR_COLOR_F256(184),//
-//    DUR_COLOR_F256(219),//
-//    DUR_COLOR_F256(220),//
-//    DUR_COLOR_F256(196),//PILE
-//    DUR_COLOR_F256(196)//DESK
-//};
 
 static void durView_score(const sBoard *b) {
     printf("> Score: [%d:%d].\n", b->left.score, b->right.score);
@@ -39,9 +21,8 @@ static void durView_cards(int count, const int *cards) {
         s = ".";
     }
 }
-static void durView_player(const sField *f) {
-    sPlayer *p = f->player;
-    printf("> Player %s: (%d) [%s%c%s]\n[", (p->place) ? "Right" : "Left", p->count, colorSuit[f->trump], suits[f->trump], colorReset);
+static void durView_player(const sPlayer *p, int trump) {
+    printf("> Player %s: (%d) [%s%c%s]\n[", (p->place) ? "Right" : "Left", p->count, colorSuit[trump], suits[trump], colorReset);
     int tmp[p->count];
     for (int i = 0; i < p->count; ++i) tmp[i] = p->card[i];
     for (int i = 0; i < p->count - 1; ++i) { //suits-ranks-sorter
@@ -73,21 +54,23 @@ static void durView_player(const sField *f) {
     printf("].\n");
 }
 
-static void durView_fight(const sField *f) {
-    printf("> Fight - attack: [");
-    durView_cards(f->attack.count, f->attack.card);
+static void durView_fight(const sBoard *b) {
+    char *s;
+    if (b->attack.count == 0)                        { s = "first attack"; }
+    else if (b->attack.count == ed_normal)           { s = "last defend"; }
+    else if (b->attack.count == b->defend.count)     { s = "attack"; }
+    else if (b->attack.count == b->defend.count + 1) { s = "defend"; }
+    else                                             { s = "ERROR"; }
+    printf("> Fight (%s):\n        - attack: [", s);
+    durView_cards(b->attack.count, b->attack.card);
     printf("]\n        - defend: [");
-    durView_cards(f->defend.count, f->defend.card);
+    durView_cards(b->defend.count, b->defend.card);
     printf("].\n");
-//    int flAttack = (f->player == f->attacker);
-//    int flEnder = flAttack ? ((f->attack.count) ? 0:1) : ((f->defend.count == ed_normal-1) ? 1:0);
-//    printf("%s. Choose card (e.g. '6s', 'Ad) or command ('Q'=ec_quit):", (flAttack) ? ((flEnder) ? "First attack":"Attack") : ((flEnder) ? "Last defend":"Defend"));
-////todo: неплохо, но наверное разбить на отдельные ф. атаки и защиты.
 }
 
 #ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
 
-static void durDbgView_boardHistory(const sHistory *h) {
+static void durView_dbg_boardHistory(const sHistory *h) {
     printf("> History: (%d)\n[", h->count);
     durView_cards(h->count, h->card);
     printf("]\n[");
@@ -99,8 +82,8 @@ static void durDbgView_boardHistory(const sHistory *h) {
     printf("].\n");
 }
 
-static void durDbgView_boardDesk(const sDesk *d) {//ASCII
-    printf("> Desk: (%d) [%s%c%s]\n[", d->count, colorSuit[d->card[0] / ed_ranks], suits[d->card[0] / ed_ranks], colorReset);
+static void durView_dbg_boardDesk(const sDesk *d) {//ASCII
+    printf("> Desk: (%d) [%s%c%s]\n[", d->count, colorSuit[d->trump], suits[d->trump], colorReset);
     char *s = "";
     for (int i = 0; i < ed_cards; ++i) {
         printf("%s%02d", s, i);
@@ -108,45 +91,43 @@ static void durDbgView_boardDesk(const sDesk *d) {//ASCII
     }
     printf("].\n[");
     durView_cards(ed_cards, d->card);
-    printf("].\n[");
+    printf("]-card.\n[");
     s = "";
-    for (int i = 0; i < ed_cards; ++i) {
+    for (int i = 0; i < ed_cards; ++i) { //показывает где лежит карта (которая находилась бы здесь если бы не тасование)
         printf("%s%02d", s, d->index[i]); //printf("%s%02d", s, d->index[d->card[i]]);
         s = ".";
     }
-    printf("].\n");
+    printf("]-index.\n");
 }
 
-void durDbgView_board(sBoard *b) {
-    printf("= = = = = = = = = = durDbgView_board = (sizeof(sBoard)=%lu, match_id = %p, stage = %d)\n", sizeof(sBoard), b, b->stage);
-    durDbgView_boardDesk(&b->desk);
+void durView_dbg_board(sBoard *b) {
+    printf("= = = = = = = = = = durView_dbg_board = (sizeof(sBoard)=%lu, match_id = %p, stage = %d)\n", sizeof(sBoard), b, b->stage);
+    durView_dbg_boardDesk(&b->desk);
     durView_score(b);
-    printf("> Turn: winner=%s, attacker=%s, dealer=%s, player=%s\n",
-           (b->field.winner == NULL) ? "Nemo" : (b->field.winner->place)?"Right":"Left",
-           (b->field.attacker == NULL) ? "Nemo" : (b->field.attacker->place)?"Right":"Left",
-           (b->field.dealer == NULL) ? "Nemo" : (b->field.dealer->place)?"Right":"Left",
-           (b->field.player == NULL) ? "Nemo" : (b->field.player->place)?"Right":"Left");
-    b->field.player = &b->left;
-    durView_player(&b->field);
-    b->field.player = &b->right;
-    durView_player(&b->field);
-    durView_fight(&b->field);
-    durDbgView_boardHistory(&b->history);
+    printf("> Turn: winner=%s, attacker=%s, defender=%s, dealer=%s\n",
+           (b->winner   == NULL) ? "Nemo" : (b->winner  ==&b->left)?"Left":"Right",
+           (b->attacker == NULL) ? "Nemo" : (b->attacker==&b->left)?"Left":"Right",
+           (b->defender == NULL) ? "Nemo" : (b->defender==&b->left)?"Left":"Right",
+           (b->dealer   == NULL) ? "Nemo" : (b->dealer  ==&b->left)?"Left":"Right");
+    durView_player(&b->left , b->desk.trump);
+    durView_player(&b->right, b->desk.trump);
+    durView_fight(b);
+    durView_dbg_boardHistory(&b->history);
 }
 
 #endif //DUR_DEBUG // ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ]
 
-void durView_attack(sField *f) {
-    printf("= = = = = = = = = = = = %s:\n", (f->attack.count)?"Attack":"First attack");
-    durView_player(f);
-    durView_fight(f);
+static void durView_attack(sBoard *b) {
+    durView_player(b->attacker, b->desk.trump);
+    durView_fight(b);
+    printf("Type a card (e.g. '6s', 'Ah') or command ('q'-ec_quit): ");
 }
 
 void durView(sBoard *b) {
     printf("durView\n"); //dbg
     switch (b->stage) {
         case es_attackView:
-            durView_attack(&b->field);
+            durView_attack(b);
             b->stage = es_attackControl;
             break;
     }
@@ -203,3 +184,22 @@ void durView(sBoard *b) {
 //         printf("%s%S%s", colorSuits[d->card[i] / ed_ranks], (wchar_t *)s, colorReset);
 //     }//printf(".\n0102030405060708091011121314151617181920\n");
 // }
+
+//static const char *const colorPlace[] = {
+//    DUR_COLOR_F256(4),//LEFT//15//254
+//    DUR_COLOR_F256(2),//RIGHT//7//244
+//    DUR_COLOR_F256(39),//
+//    DUR_COLOR_F256(40),//
+//    DUR_COLOR_F256(75),//
+//    DUR_COLOR_F256(76),//
+//    DUR_COLOR_F256(111),//
+//    DUR_COLOR_F256(112),//
+//    DUR_COLOR_F256(147),//
+//    DUR_COLOR_F256(148),//
+//    DUR_COLOR_F256(183),//
+//    DUR_COLOR_F256(184),//
+//    DUR_COLOR_F256(219),//
+//    DUR_COLOR_F256(220),//
+//    DUR_COLOR_F256(196),//PILE
+//    DUR_COLOR_F256(196)//DESK
+//};

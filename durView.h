@@ -10,7 +10,7 @@ static const char *const places = "LLRRa1a2a3a4a5a6d1d2d3d4d5d6PPDD";
 void durView(sBoard *b);
 
 #ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
-void durDbgView_board(sBoard *b);
+void durView_dbg_board(sBoard *b);
 #endif //DUR_DEBUG // ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ]
 
 #endif //DUR_DURVIEW_H

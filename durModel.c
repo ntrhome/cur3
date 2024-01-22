@@ -12,12 +12,12 @@ static sBoard *newBoard() {
     b->left.score = 0;
     b->right.place = ep_right;
     b->right.score = 0;
-    b->field.winner = NULL;
+    b->winner = NULL;
     b->stage = es_newGame;
     return b;
 }
 
-static int newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
+static void newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
     srand((int)time(NULL));
     d->count = ed_cards;
     int flReshuffle;
@@ -46,20 +46,21 @@ static int newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
             }
         }
     }
-    return d->card[0] / ed_ranks; //suits of trump
+    d->trump = d->card[0] / ed_ranks; //suits of trump
 }
-static void newGame_setAttackerDealer(sBoard *b) {
-    if(b->field.winner == NULL) { //drawing (first or drawn game)
+static void newGame_setRoles(sBoard *b) {
+    if(b->winner == NULL) { //drawing (first or drawn game)
         srand((int)time(NULL));
-        b->field.attacker = (rand() % ed_players) ? &b->right : &b->left;
+        b->attacker = (rand() % ed_players) ? &b->right : &b->left;
     } else {
-        b->field.attacker = b->field.winner;
+        b->attacker = b->winner;
     }
-    b->field.dealer = b->field.attacker; //to reduce history it possible to assign permanently &b->left (with implementation of first dealing)
+    b->defender = (b->attacker == &b->left) ? &b->right : &b->left;
+    b->dealer = &b->left; //b->attacker; //to reduce history it possible to assign permanently &b->left (with implementation of first dealing)
 }
 static void newGame(sBoard *b) {
-    b->field.trump = newGame_shuffleDesk(&b->desk);
-    newGame_setAttackerDealer(b);
+    newGame_shuffleDesk(&b->desk);
+    newGame_setRoles(b);
     b->left.count = 0;
     b->right.count = 0;
     b->history.count = 0;
@@ -71,24 +72,23 @@ static void history(sHistory *h, int card, ep place) {
     h->place[h->count++] = place;
 }
 static void newFight_dealing(sBoard *b) {
-    while (b->field.dealer->count < ed_normal && b->desk.count > 0) {
-        b->field.dealer->card[b->field.dealer->count++] = b->desk.card[--b->desk.count];
-        history(&b->history, b->desk.card[b->desk.count], b->field.dealer->place);
+    while (b->dealer->count < ed_normal && b->desk.count > 0) {
+        b->dealer->card[b->dealer->count++] = b->desk.card[--b->desk.count];
+        history(&b->history, b->desk.card[b->desk.count], b->dealer->place);
     }
 }
 static void newFight(sBoard *b) {
     newFight_dealing(b);
-    b->field.dealer = (b->field.dealer->place) ? &b->left : &b->right;
+    b->dealer = (b->dealer == &b->left) ? &b->right : &b->left;
     newFight_dealing(b);
-    b->field.dealer = b->field.attacker; //for next dealing
-    b->field.attack.count = 0;
-    b->field.defend.count = 0;
+    b->dealer = b->attacker; //for next dealing
+    b->attack.count = 0;
+    b->defend.count = 0;
     b->stage = es_attack;
 }
 
 static void attack(sBoard *b) {
     //cheks
-    b->field.player = b->field.attacker;
     b->stage = es_attackView;
 }
 
@@ -102,13 +102,12 @@ void durModel(sBoard *b) {
 //        break;
     case es_attack:
         attack(b);
-//        attack();
         break;
-    case es_cmd_quit:
-        ;
-        exit(0);
+//    case es_cmd_quit:
+//        ;
+//        exit(0);
     }
-    durDbgView_board(b); //dbg
+//    durView_dbg_board(b); //dbg
 }
 
 void dur() {
