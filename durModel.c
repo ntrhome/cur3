@@ -7,7 +7,7 @@
 
 static sBoard *newBoard() {
     sBoard *b = malloc(sizeof(sBoard));
-    for (int position = 0; position < ed_cards; ++position) b->desk.card[position] = position; //cards filling
+    for (int i = 0; i < ed_cards; ++i) b->desk.card[i] = i; //cards filling
     b->left.place = ep_left;
     b->left.score = 0;
     b->right.place = ep_right;
@@ -17,7 +17,7 @@ static sBoard *newBoard() {
     return b;
 }
 
-static void newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
+static void newGame_shuffleDesk(sDesk *d) {
     srand((int)time(NULL));
     d->count = ed_cards;
     int flReshuffle;
@@ -27,7 +27,9 @@ static void newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
             int r;
             int depot = d->card[r = rand() % ed_cards];
             d->card[r] = d->card[position];
+            d->index[d->card[r]] = r;   //index filling
             d->card[position] = depot;
+            d->index[depot] = position; //index filling
         }
         int suit[ed_suits]; //test (if there are more than 4 same suits in one hand - Reshuffle)
         for (int position = ed_talon; position < ed_cards; ++position) { //test the cards intended for first dealing
@@ -38,14 +40,6 @@ static void newGame_shuffleDesk(sDesk *d) { //return trump (suits of trump)
             }
         }
     } while (flReshuffle);
-    for (int card = 0; card < ed_cards; ++card) { //index filling
-        for (int position = 0; position < ed_cards; ++position) {
-            if (d->card[position] == card) {
-                d->index[card] = position;
-                break;
-            }
-        }
-    }
     d->trump = d->card[0] / ed_ranks; //suits of trump
 }
 static void newGame_setRoles(sBoard *b) {
@@ -60,9 +54,9 @@ static void newGame_setRoles(sBoard *b) {
 }
 static void newGame(sBoard *b) {
     newGame_shuffleDesk(&b->desk);
-    newGame_setRoles(b);
     b->left.count = 0;
     b->right.count = 0;
+    newGame_setRoles(b);
     b->history.count = 0;
     b->stage = es_newFight;
 }
@@ -81,7 +75,7 @@ static void newFight(sBoard *b) {
     newFight_dealing(b);
     b->dealer = (b->dealer == &b->left) ? &b->right : &b->left;
     newFight_dealing(b);
-    b->dealer = b->attacker; //for next dealing
+    b->dealer = b->attacker; //for next newFight
     b->attack.count = 0;
     b->defend.count = 0;
     b->stage = es_attack;
@@ -91,29 +85,107 @@ static void attack(sBoard *b) {
     //cheks
     b->stage = es_attackView;
 }
+//-----------------------------------------
+static int isPlayerHasCard(const sPlayer *p, int card) {
+    for (int i = 0; i < p->count; ++i) {
+        if (card == p->card[i]) return 1;
+    }
+    return 0;
+}
+static int isFightsHasRank(const sBoard *b, int rank) {
+    for (int i = 0; i < b->attack.count; ++i) {
+        if (rank == b->attack.card[i] % ed_ranks) return 1;
+    }
+    for (int i = 0; i < b->defend.count; ++i) {
+        if (rank == b->defend.card[i] % ed_ranks) return 1;
+    }
+    return 0;
+}
+static void attackResult(sBoard *b) {
+    if (b->cmd > 1000) { //cmd
+        if (b->cmd == es_cmd_quit) b->stage = es_cmd_quit;
+        else {
+            durView_msg("Some stuff has been typed. Please try again.\n");
+            b->stage = es_attackView;
+        }
+        return;
+    } //card:
+    if (!isPlayerHasCard(b->attacker, b->cmd)) {
+        durView_msg("Some stuff has been typed. Please try again.\n");
+        b->stage = es_attackView;
+    }
+
+
+    int flCardAcceptable = 0;
+    if (b->attack.count == 0) { //first attack (seek in attacker cards)
+        flCardAcceptable = isPlayerHasCard(b->attacker, b->cmd);
+    } else {
+
+    }
+
+
+        int flCardOk = 0;
+        if (b->attack.count) { //not first attack (seek in attack- and defend- cards)
+            for (int i = 0; i < b->attack.count; ++i) {
+                if (b->cmd % ed_ranks == b->attack.card[i] % ed_ranks) {
+                    flCardOk = 1;
+                    break;
+                }
+            }
+            if (flCardOk == 0) {
+                for (int i = 0; i < b->defend.count; ++i) {
+                    if (b->cmd % ed_ranks == b->defend.card[i] % ed_ranks) {
+                        flCardOk = 1;
+                        break;
+                    }
+                }
+            }
+        } else { //first attack (seek in attacker cards)
+            for (int i = 0; i < b->attacker->count; ++i) {
+                if (b->cmd == b->attacker->card[i]) {
+                    flCardOk = 1;
+                    break;
+                }
+            }
+        }
+        if (flCardOk) {
+            b->attack.card[b->attack.count++] = b->cmd;
+            history(&b->history, b->cmd, ep_attack);
+            b->stage = es_defend;
+        } else {
+            durView_msg("Some stuff has been typed. Please try again.\n");
+            b->stage = es_attackView;
+        }
+    }
+}
 
 void durModel(sBoard *b) {
     switch (b->stage) {
     case es_newGame:
         newGame(b);
-//        break;
     case es_newFight:
         newFight(b);
-//        break;
     case es_attack:
         attack(b);
         break;
-//    case es_cmd_quit:
-//        ;
-//        exit(0);
+    case es_attackResult:
+        attackResult(b);
+        break;
+    case es_attackResultWrong:
+        ;
+        break;
     }
 //    durView_dbg_board(b); //dbg
 }
 
 void dur() {
     sBoard *b1 = newBoard();
-    durModel(b1);
-    durView(b1);
-    durControl(b1);
+    while (b1->stage != es_cmd_quit)
+    {
+        durModel(b1);
+        durView(b1);    //отделяем для автономности - возможность потока
+        durControl(b1); //отделяем для автономности - возможность потока
+    }
     free(b1);
+    durView_msg("Quit.");
 }

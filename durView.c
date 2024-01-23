@@ -14,10 +14,10 @@ static void durView_score(const sBoard *b) {
     printf("> Score: [%d:%d].\n", b->left.score, b->right.score);
 }
 
-static void durView_cards(int count, const int *cards) {
+static void durView_cards(int count, const int *card) {
     char *s = "";
     for (int position = 0; position < count; ++position) {
-        printf("%s%s%c%c%s", s, colorSuit[cards[position] / ed_ranks], ranks[cards[position] % ed_ranks], suits[cards[position] / ed_ranks], colorReset);
+        printf("%s%s%c%c%s", s, colorSuit[card[position] / ed_ranks], ranks[card[position] % ed_ranks], suits[card[position] / ed_ranks], colorReset);
         s = ".";
     }
 }
@@ -60,7 +60,7 @@ static void durView_fight(const sBoard *b) {
     else if (b->attack.count == ed_normal)           { s = "last defend"; }
     else if (b->attack.count == b->defend.count)     { s = "attack"; }
     else if (b->attack.count == b->defend.count + 1) { s = "defend"; }
-    else                                             { s = "ERROR"; }
+    else                                             { s = "ERROR"; } //dbg - потом уберем, а предыдущая будет default
     printf("> Fight (%s):\n        - attack: [", s);
     durView_cards(b->attack.count, b->attack.card);
     printf("]\n        - defend: [");
@@ -68,7 +68,30 @@ static void durView_fight(const sBoard *b) {
     printf("].\n");
 }
 
-#ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
+static void durView_attack(const sBoard *b) {
+    durView_player(b->attacker, b->desk.trump);
+    durView_fight(b);
+    printf("Type a card (e.g. '6s', 'Ah') or command ('q'-quit): ");
+}
+
+void durView_msg(char *s){
+    printf("%s\n", s);
+    fflush(stdout);
+}
+
+void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
+    //printf("durView\n"); //dbg
+    switch (b->stage) {
+        case es_attackView:
+            durView_attack((const sBoard *)b);
+            b->stage = es_attackControl;
+            break;
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+#ifdef DUR_DEBUG
 
 static void durView_dbg_boardHistory(const sHistory *h) {
     printf("> History: (%d)\n[", h->count);
@@ -100,7 +123,7 @@ static void durView_dbg_boardDesk(const sDesk *d) {//ASCII
     printf("]-index.\n");
 }
 
-void durView_dbg_board(sBoard *b) {
+void durView_dbg_board(const sBoard *b) {
     printf("= = = = = = = = = = durView_dbg_board = (sizeof(sBoard)=%lu, match_id = %p, stage = %d)\n", sizeof(sBoard), b, b->stage);
     durView_dbg_boardDesk(&b->desk);
     durView_score(b);
@@ -115,26 +138,9 @@ void durView_dbg_board(sBoard *b) {
     durView_dbg_boardHistory(&b->history);
 }
 
-#endif //DUR_DEBUG // ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ]
-
-static void durView_attack(sBoard *b) {
-    durView_player(b->attacker, b->desk.trump);
-    durView_fight(b);
-    printf("Type a card (e.g. '6s', 'Ah') or command ('q'-ec_quit): ");
-}
-
-void durView(sBoard *b) {
-    printf("durView\n"); //dbg
-    switch (b->stage) {
-        case es_attackView:
-            durView_attack(b);
-            b->stage = es_attackControl;
-            break;
-    }
-}
+#endif //DUR_DEBUG
 
 // = = = = = = = = = = = = = = = = = = = = = = = =
-
 // "6789XJQKA"
 // "scdh" (Spades, Clubs, Diamonds, Hearts)
 // "ptbc" (пики, трефы, бубны, червы)
@@ -142,7 +148,6 @@ void durView(sBoard *b) {
 // "♠♣♦♥"
 // "♤♧♢♧"
 // "♠️♣️♦️♥️"
-
 // 🂢🂣🂤🂥🂦🂧🂨🂩🂪🂫🂭🂮🂡
 // 🃒🃓🃔🃕🃖🃗🃘🃙🃚🃛🃝🃞🃑
 // 🃂🃃🃄🃅🃆🃇🃈🃉🃊🃋🃍🃎🃁
