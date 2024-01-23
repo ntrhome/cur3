@@ -13,7 +13,7 @@ static es durControl_inputCardOrCommand() { //return card [0..ed_cards) or comma
     //command
     if (s[1] == 0) {
         if(s[0] == 'T') return es_cmd_take;
-        if(s[0] == 'N') return es_cmd_noadd;
+        if(s[0] == 'E') return es_cmd_enough;
         if(s[0] == 'Q') return es_cmd_quit;
         return es_cmd_wrong;
     }

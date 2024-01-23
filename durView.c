@@ -55,13 +55,7 @@ static void durView_player(const sPlayer *p, int trump) {
 }
 
 static void durView_fight(const sBoard *b) {
-    char *s;
-    if (b->attack.count == 0)                        { s = "first attack"; }
-    else if (b->attack.count == ed_normal)           { s = "last defend"; }
-    else if (b->attack.count == b->defend.count)     { s = "attack"; }
-    else if (b->attack.count == b->defend.count + 1) { s = "defend"; }
-    else                                             { s = "ERROR"; } //dbg - потом уберем, а предыдущая будет default
-    printf("> Fight (%s):\n        - attack: [", s);
+    printf("> Fight:\n        - attack: [");
     durView_cards(b->attack.count, b->attack.card);
     printf("]\n        - defend: [");
     durView_cards(b->defend.count, b->defend.card);
@@ -71,7 +65,14 @@ static void durView_fight(const sBoard *b) {
 static void durView_attack(const sBoard *b) {
     durView_player(b->attacker, b->desk.trump);
     durView_fight(b);
-    printf("Type a card (e.g. '6s', 'Ah') or command ('q'-quit): ");
+
+    char *s1, *s2;
+    if (b->attack.count == 0) {
+        s1 = "First"; s2 = "";
+    } else {
+        s1 = "Next";  s2 = "'e'-enough, ";
+    }
+    printf("%s attack. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
 }
 
 void durView_msg(char *s){

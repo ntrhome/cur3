@@ -101,62 +101,35 @@ static int isFightsHasRank(const sBoard *b, int rank) {
     }
     return 0;
 }
+static int attackMove(sPlayer *p, int card) { //todo: return Ok/Cancel
+    for (int i = 0; i < p->count; ++i) {
+        if (p->card[i] == card) {
+
+        }
+    }
+}
 static void attackResult(sBoard *b) {
     if (b->cmd > 1000) { //cmd
-        if (b->cmd == es_cmd_quit) b->stage = es_cmd_quit;
-        else {
-            durView_msg("Some stuff has been typed. Please try again.\n");
-            b->stage = es_attackView;
-        }
-        return;
-    } //card:
-    if (!isPlayerHasCard(b->attacker, b->cmd)) {
-        durView_msg("Some stuff has been typed. Please try again.\n");
-        b->stage = es_attackView;
-    }
+        if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
+        if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
+    } else if ( //card:
+                isPlayerHasCard(b->attacker, b->cmd)
+                &&
+                (
+                        (b->attack.count == 0) //first attack
+                        ||
+                        isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
+                )
+            )
+    {
 
-
-    int flCardAcceptable = 0;
-    if (b->attack.count == 0) { //first attack (seek in attacker cards)
-        flCardAcceptable = isPlayerHasCard(b->attacker, b->cmd);
-    } else {
-
-    }
-
-
-        int flCardOk = 0;
-        if (b->attack.count) { //not first attack (seek in attack- and defend- cards)
-            for (int i = 0; i < b->attack.count; ++i) {
-                if (b->cmd % ed_ranks == b->attack.card[i] % ed_ranks) {
-                    flCardOk = 1;
-                    break;
-                }
-            }
-            if (flCardOk == 0) {
-                for (int i = 0; i < b->defend.count; ++i) {
-                    if (b->cmd % ed_ranks == b->defend.card[i] % ed_ranks) {
-                        flCardOk = 1;
-                        break;
-                    }
-                }
-            }
-        } else { //first attack (seek in attacker cards)
-            for (int i = 0; i < b->attacker->count; ++i) {
-                if (b->cmd == b->attacker->card[i]) {
-                    flCardOk = 1;
-                    break;
-                }
-            }
-        }
-        if (flCardOk) {
             b->attack.card[b->attack.count++] = b->cmd;
             history(&b->history, b->cmd, ep_attack);
             b->stage = es_defend;
-        } else {
-            durView_msg("Some stuff has been typed. Please try again.\n");
-            b->stage = es_attackView;
-        }
+            return;
     }
+    durView_msg("Some stuff has been typed. Please try again.\n");
+    b->stage = es_attackView; //repeat
 }
 
 void durModel(sBoard *b) {
@@ -171,9 +144,9 @@ void durModel(sBoard *b) {
     case es_attackResult:
         attackResult(b);
         break;
-    case es_attackResultWrong:
-        ;
-        break;
+//    case es_attackResultWrong:
+//        ;
+//        break;
     }
 //    durView_dbg_board(b); //dbg
 }
