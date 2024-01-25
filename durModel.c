@@ -64,12 +64,13 @@ static void history(sHistory *h, int card, ep place) {
     h->place[h->count++] = place;
 }
 static void newFight_dealing(sBoard *b) {
-    for (int i = 0; i < ed_players; ++i) {
-        while (b->dealer->count < ed_normal && b->desk.count > 0) {
-            b->dealer->card[b->dealer->count++] = b->desk.card[--b->desk.count];
-            history(&b->history, b->desk.card[b->desk.count], b->dealer->place);
+    sPlayer *p = b->dealer;
+    for (int n = 0; n < ed_players; ++n) {
+        while (p->count < ed_normal && b->desk.count > 0) {
+            p->card[p->count++] = b->desk.card[--b->desk.count];
+            history(&b->history, b->desk.card[b->desk.count], p->place);
         }
-        b->dealer = (b->dealer == &b->left) ? &b->right : &b->left;
+        p = (p == &b->left) ? &b->right : &b->left;
     }
 }
 static void newFight(sBoard *b) {
