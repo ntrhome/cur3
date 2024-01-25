@@ -48,8 +48,8 @@ static void newGame(sBoard *b) {
     b->left.count = 0;
     b->right.count = 0;
     for (int i = 0; i < ed_cards; ++i) {
-        b->left.card[i] = 0;
-        b->right.card[i] = 0;
+        b->left.holder[i]  = 0;
+        b->right.holder[i] = 0;
     }
     if(b->winner == NULL) { //roles :drawing (first or drawn game)
         srand((int)time(NULL));
@@ -71,7 +71,7 @@ static void newFight_dealing(sBoard *b) {
     sPlayer *p = b->dealer;
     for (int n = 0; n < ed_players; ++n) {
         while (p->count < ed_normal && b->desk.count > 0) {
-            p->card[b->desk.card[--b->desk.count]] = 1;
+            p->holder[b->desk.card[--b->desk.count]] = 1;
             ++p->count;
             history(&b->history, b->desk.card[b->desk.count], p->place);
         }
@@ -105,7 +105,7 @@ static void attackResult(sBoard *b) {
         if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
     } else if ( //card:
-                b->attacker->card[b->cmd]
+                b->attacker->holder[b->cmd]
                 &&
                 (
                     (b->attack.count == 0) //first attack
@@ -114,14 +114,14 @@ static void attackResult(sBoard *b) {
                 )
             )
     {
-        b->attacker->card[b->cmd] = 0;
+        b->attacker->holder[b->cmd] = 0;
         --b->attacker->count;
         b->attack.card[b->attack.count++] = b->cmd;
         history(&b->history, b->cmd, ep_attack);
         b->stage = es_defend;
         return;
     }
-    durView_msg("Some stuff has been typed. Please try again.\n");
+    durView_msg("- - - Some stuff has been typed. Please try again. - - -\n");
     b->stage = es_attackView; //repeat
 }
 
@@ -141,7 +141,8 @@ void durModel(sBoard *b) {
         b->stage = es_attack; //
         break;
     }
-    durView_dbg_board(b); //dbg
+    durView_msg("----------------------");
+//    durView_dbg_board(b); //dbg
 }
 
 void dur() {

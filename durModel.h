@@ -1,6 +1,10 @@
 #ifndef DUR_DURMODEL_H
 #define DUR_DURMODEL_H
 
+#define bool	_Bool
+#define true	1
+#define false	0
+
 #define DUR_DEBUG
 
 typedef enum ED { ed_players=2, ed_suits=4, ed_ranks = 9, ed_normal = 6, ed_talon = ed_suits * ed_ranks - ed_players * ed_normal, ed_cards = ed_suits * ed_ranks } ed;
@@ -16,7 +20,7 @@ typedef struct {
 
 typedef struct {
     int count;
-    int card [ed_cards];
+    int holder [ed_cards]; // ..x...x.......x.x.
     ep place;
     int score;
 } sPlayer;

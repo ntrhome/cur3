@@ -24,7 +24,7 @@ static void durView_cards(int count, const int *card) {
 static void durView_playerCardsBySuit(const sPlayer *p) {
     char *s = "";
     for (int position = 0; position < ed_cards; ++position) {
-        if (p->card[position]) {
+        if (p->holder[position]) {
             printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks],
                    suits[position / ed_ranks], colorReset);
             s = ".";
@@ -36,7 +36,7 @@ static void durView_playerCardsByRank(const sPlayer *p) {
     for (int rank = 0; rank < ed_ranks; ++rank) {
         for (int suit = 0; suit < ed_suits; ++suit) {
             int position = suit * ed_ranks + rank;
-            if (p->card[position]) {
+            if (p->holder[position]) {
                 printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks],
                        suits[position / ed_ranks], colorReset);
                 s = ".";
@@ -74,7 +74,7 @@ static void durView_attack(const sBoard *b) {
 }
 
 void durView_msg(char *s){
-    printf("%s\n", s);
+    printf("%s", s);
     fflush(stdout);
 }
 
