@@ -23,27 +23,31 @@ static void newGame_shuffleDesk(sDesk *d) {
     int flReshuffle;
     do { //cards shuffle
         flReshuffle = 0;
-        for (int position = 0; position < ed_cards; ++position) {
+        for (int i = 0; i < ed_cards; ++i) {
             int r;
             int depot = d->card[r = rand() % ed_cards];
-            d->card[r] = d->card[position];
-            d->index[d->card[r]] = r;   //index filling
-            d->card[position] = depot;
-            d->index[depot] = position; //index filling
+            d->card[r] = d->card[i];
+            d->card[i] = depot;
         }
         int suit[ed_suits]; //test (if there are more than 4 same suits in one hand - Reshuffle)
-        for (int position = ed_talon; position < ed_cards; ++position) { //test the cards intended for first dealing
-            if (position == ed_talon || position == ed_talon + ed_normal) { suit[0]=0; suit[1]=0; suit[2]=0; suit[3]=0; }
-            if (++suit[d->card[position] / ed_ranks] > 4) { //more than 4 card of the same suits
+        for (int i = ed_talon; i < ed_cards; ++i) { //test the cards intended for first dealing
+            if (i == ed_talon || i == ed_talon + ed_normal) { suit[0]=0; suit[1]=0; suit[2]=0; suit[3]=0; }
+            if (++suit[d->card[i] / ed_ranks] > 4) { //more than 4 card of the same suits
                 flReshuffle = 1;
                 break;
             }
         }
     } while (flReshuffle);
+    for (int i = 0; i < ed_cards; ++i) {
+        d->position[d->card[i]] = i;
+    }
     d->trump = d->card[0] / ed_ranks; //suits of trump
 }
-static void newGame_setRoles(sBoard *b) {
-    if(b->winner == NULL) { //drawing (first or drawn game)
+static void newGame(sBoard *b) {
+    newGame_shuffleDesk(&b->desk);
+    b->left.count = 0;
+    b->right.count = 0;
+    if(b->winner == NULL) { //roles :drawing (first or drawn game)
         srand((int)time(NULL));
         b->attacker = (rand() % ed_players) ? &b->right : &b->left;
     } else {
@@ -51,12 +55,6 @@ static void newGame_setRoles(sBoard *b) {
     }
     b->defender = (b->attacker == &b->left) ? &b->right : &b->left;
     b->dealer = &b->left; //b->attacker; //to reduce history it possible to assign permanently &b->left (with implementation of first dealing)
-}
-static void newGame(sBoard *b) {
-    newGame_shuffleDesk(&b->desk);
-    b->left.count = 0;
-    b->right.count = 0;
-    newGame_setRoles(b);
     b->history.count = 0;
     b->stage = es_newFight;
 }
@@ -66,14 +64,15 @@ static void history(sHistory *h, int card, ep place) {
     h->place[h->count++] = place;
 }
 static void newFight_dealing(sBoard *b) {
-    while (b->dealer->count < ed_normal && b->desk.count > 0) {
-        b->dealer->card[b->dealer->count++] = b->desk.card[--b->desk.count];
-        history(&b->history, b->desk.card[b->desk.count], b->dealer->place);
+    for (int i = 0; i < ed_players; ++i) {
+        while (b->dealer->count < ed_normal && b->desk.count > 0) {
+            b->dealer->card[b->dealer->count++] = b->desk.card[--b->desk.count];
+            history(&b->history, b->desk.card[b->desk.count], b->dealer->place);
+        }
+        b->dealer = (b->dealer == &b->left) ? &b->right : &b->left;
     }
 }
 static void newFight(sBoard *b) {
-    newFight_dealing(b);
-    b->dealer = (b->dealer == &b->left) ? &b->right : &b->left;
     newFight_dealing(b);
     b->dealer = b->attacker; //for next newFight
     b->attack.count = 0;
@@ -86,11 +85,11 @@ static void attack(sBoard *b) {
     b->stage = es_attackView;
 }
 //-----------------------------------------
-static int isPlayerHasCard(const sPlayer *p, int card) {
+static int playerCardPosition(const sPlayer *p, int card) {
     for (int i = 0; i < p->count; ++i) {
-        if (card == p->card[i]) return 1;
+        if (card == p->card[i]) return i;
     }
-    return 0;
+    return -1;
 }
 static int isFightsHasRank(const sBoard *b, int rank) {
     for (int i = 0; i < b->attack.count; ++i) {
@@ -101,32 +100,27 @@ static int isFightsHasRank(const sBoard *b, int rank) {
     }
     return 0;
 }
-static int attackMove(sPlayer *p, int card) { //todo: return Ok/Cancel
-    for (int i = 0; i < p->count; ++i) {
-        if (p->card[i] == card) {
 
-        }
-    }
-}
 static void attackResult(sBoard *b) {
+    int pcp;
     if (b->cmd > 1000) { //cmd
         if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
     } else if ( //card:
-                isPlayerHasCard(b->attacker, b->cmd)
+                (pcp = playerCardPosition(b->attacker, b->cmd)) >= 0
                 &&
                 (
-                        (b->attack.count == 0) //first attack
-                        ||
-                        isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
+                    (b->attack.count == 0) //first attack
+                    ||
+                    isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
                 )
             )
     {
-
-            b->attack.card[b->attack.count++] = b->cmd;
-            history(&b->history, b->cmd, ep_attack);
-            b->stage = es_defend;
-            return;
+        b->attacker->card[pcp] = b->attacker->card[--b->attacker->count];
+        b->attack.card[b->attack.count++] = b->cmd;
+        history(&b->history, b->cmd, ep_attack);
+        b->stage = es_defend;
+        return;
     }
     durView_msg("Some stuff has been typed. Please try again.\n");
     b->stage = es_attackView; //repeat
@@ -144,9 +138,9 @@ void durModel(sBoard *b) {
     case es_attackResult:
         attackResult(b);
         break;
-//    case es_attackResultWrong:
-//        ;
-//        break;
+    case es_defend:
+        b->stage = es_attack; //
+        break;
     }
 //    durView_dbg_board(b); //dbg
 }

@@ -9,8 +9,8 @@ typedef enum EP { ep_left=0, ep_right=1, ep_attack, ep_defend, ep_pile, ep_desk,
 
 typedef struct {
     int count;
-    int card  [ed_cards]; //card[index] = card
-    int index [ed_cards]; //index[card] = index
+    int card     [ed_cards]; //card[position] = card      - какая карта в заданной позиции?
+    int position [ed_cards]; //position[card] = position  - какая позиция у заданной карты?
     int trump;
 } sDesk;
 

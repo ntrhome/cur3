@@ -118,7 +118,7 @@ static void durView_dbg_boardDesk(const sDesk *d) {//ASCII
     printf("]-card.\n[");
     s = "";
     for (int i = 0; i < ed_cards; ++i) { //показывает где лежит карта (которая находилась бы здесь если бы не тасование)
-        printf("%s%02d", s, d->index[i]); //printf("%s%02d", s, d->index[d->card[i]]);
+        printf("%s%02d", s, d->position[i]); //printf("%s%02d", s, d->index[d->card[i]]);
         s = ".";
     }
     printf("]-index.\n");
