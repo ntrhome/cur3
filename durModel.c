@@ -47,6 +47,10 @@ static void newGame(sBoard *b) {
     newGame_shuffleDesk(&b->desk);
     b->left.count = 0;
     b->right.count = 0;
+    for (int i = 0; i < ed_cards; ++i) {
+        b->left.card[i] = 0;
+        b->right.card[i] = 0;
+    }
     if(b->winner == NULL) { //roles :drawing (first or drawn game)
         srand((int)time(NULL));
         b->attacker = (rand() % ed_players) ? &b->right : &b->left;
@@ -67,7 +71,8 @@ static void newFight_dealing(sBoard *b) {
     sPlayer *p = b->dealer;
     for (int n = 0; n < ed_players; ++n) {
         while (p->count < ed_normal && b->desk.count > 0) {
-            p->card[p->count++] = b->desk.card[--b->desk.count];
+            p->card[b->desk.card[--b->desk.count]] = 1;
+            ++p->count;
             history(&b->history, b->desk.card[b->desk.count], p->place);
         }
         p = (p == &b->left) ? &b->right : &b->left;
@@ -86,12 +91,6 @@ static void attack(sBoard *b) {
     b->stage = es_attackView;
 }
 //-----------------------------------------
-static int playerCardPosition(const sPlayer *p, int card) {
-    for (int i = 0; i < p->count; ++i) {
-        if (card == p->card[i]) return i;
-    }
-    return -1;
-}
 static int isFightsHasRank(const sBoard *b, int rank) {
     for (int i = 0; i < b->attack.count; ++i) {
         if (rank == b->attack.card[i] % ed_ranks) return 1;
@@ -101,14 +100,12 @@ static int isFightsHasRank(const sBoard *b, int rank) {
     }
     return 0;
 }
-
 static void attackResult(sBoard *b) {
-    int pcp;
     if (b->cmd > 1000) { //cmd
         if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
     } else if ( //card:
-                (pcp = playerCardPosition(b->attacker, b->cmd)) >= 0
+                b->attacker->card[b->cmd]
                 &&
                 (
                     (b->attack.count == 0) //first attack
@@ -117,7 +114,8 @@ static void attackResult(sBoard *b) {
                 )
             )
     {
-        b->attacker->card[pcp] = b->attacker->card[--b->attacker->count];
+        b->attacker->card[b->cmd] = 0;
+        --b->attacker->count;
         b->attack.card[b->attack.count++] = b->cmd;
         history(&b->history, b->cmd, ep_attack);
         b->stage = es_defend;
@@ -143,7 +141,7 @@ void durModel(sBoard *b) {
         b->stage = es_attack; //
         break;
     }
-//    durView_dbg_board(b); //dbg
+    durView_dbg_board(b); //dbg
 }
 
 void dur() {

@@ -21,36 +21,34 @@ static void durView_cards(int count, const int *card) {
         s = ".";
     }
 }
+static void durView_playerCardsBySuit(const sPlayer *p) {
+    char *s = "";
+    for (int position = 0; position < ed_cards; ++position) {
+        if (p->card[position]) {
+            printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks],
+                   suits[position / ed_ranks], colorReset);
+            s = ".";
+        }
+    }
+}
+static void durView_playerCardsByRank(const sPlayer *p) {
+    char *s = "";
+    for (int rank = 0; rank < ed_ranks; ++rank) {
+        for (int suit = 0; suit < ed_suits; ++suit) {
+            int position = suit * ed_ranks + rank;
+            if (p->card[position]) {
+                printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks],
+                       suits[position / ed_ranks], colorReset);
+                s = ".";
+            }
+        }
+    }
+}
 static void durView_player(const sPlayer *p, int trump) {
     printf("> Player %s: (%d) [%s%c%s]\n[", (p->place) ? "Right" : "Left", p->count, colorSuit[trump], suits[trump], colorReset);
-    int tmp[p->count];
-    for (int i = 0; i < p->count; ++i) tmp[i] = p->card[i];
-    for (int i = 0; i < p->count - 1; ++i) { //suits-ranks-sorter
-        for (int j = i+1; j < p->count; ++j) {
-            if(tmp[i] > tmp[j]) {
-                int depot = tmp[j];
-                tmp[j] = tmp[i];
-                tmp[i] = depot;
-            }
-        }
-    }
-    durView_cards(p->count, tmp);
+    durView_playerCardsBySuit(p);
     printf("] /%s[", (p->count > 16 ) ? "\n" : " ");
-    for (int i = 0; i < p->count - 1; ++i) { //ranks-suits-sorter
-        for (int j = i+1; j < p->count; ++j) {
-            if(tmp[i] % ed_ranks > tmp[j] % ed_ranks
-                ||
-                tmp[i] % ed_ranks == tmp[j] % ed_ranks
-                &&
-                tmp[i] > tmp[j])
-            {
-                int depot = tmp[j];
-                tmp[j] = tmp[i];
-                tmp[i] = depot;
-            }
-        }
-    }
-    durView_cards(p->count, tmp);
+    durView_playerCardsByRank(p);
     printf("].\n");
 }
 
