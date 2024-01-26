@@ -130,7 +130,7 @@ void durModel(sBoard *b) {
     case es_newGame:
         newGame(b);
     case es_newFight:
-        newFight(b);
+        newFight(b);//todo
     case es_attack:
         attack(b);
         break;
