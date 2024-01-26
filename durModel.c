@@ -5,6 +5,11 @@
 #include "durView.h"
 #include "durControl.h"
 
+static void history(sHistory *h, int card, ep place) {
+    h->card[h->count] = card;
+    h->place[h->count++] = place;
+}
+
 static sBoard *newBoard() {
     sBoard *b = malloc(sizeof(sBoard));
     for (int i = 0; i < ed_cards; ++i) b->desk.card[i] = i; //cards filling
@@ -43,11 +48,10 @@ static void newGame_shuffleDesk(sDesk *d) {
     }
     d->trump = d->card[0] / ed_ranks; //suits of trump
 }
-static void newGame(sBoard *b) {
-    newGame_shuffleDesk(&b->desk);
+static void newGame_playersInit(sBoard *b) {
     b->left.count = 0;
     b->right.count = 0;
-    for (int i = 0; i < ed_cards; ++i) {
+    for (int i = 0; i < ed_cards; ++i) { //player holders filling
         b->left.holder[i]  = 0;
         b->right.holder[i] = 0;
     }
@@ -59,14 +63,14 @@ static void newGame(sBoard *b) {
     }
     b->defender = (b->attacker == &b->left) ? &b->right : &b->left;
     b->dealer = &b->left; //b->attacker; //to reduce history it possible to assign permanently &b->left (with implementation of first dealing)
+}
+static void newGame(sBoard *b) {
+    newGame_shuffleDesk(&b->desk);
+    newGame_playersInit(b);
     b->history.count = 0;
-    b->stage = es_newFight;
+    b->stage = es_newGameView;
 }
 
-static void history(sHistory *h, int card, ep place) {
-    h->card[h->count] = card;
-    h->place[h->count++] = place;
-}
 static void newFight_dealing(sBoard *b) {
     sPlayer *p = b->dealer;
     for (int n = 0; n < ed_players; ++n) {
@@ -83,7 +87,7 @@ static void newFight(sBoard *b) {
     b->dealer = b->attacker; //for next newFight
     b->attack.count = 0;
     b->defend.count = 0;
-    b->stage = es_attack;
+    b->stage = es_newFightView;
 }
 
 static void attack(sBoard *b) {
@@ -121,7 +125,7 @@ static void attackResult(sBoard *b) {
         b->stage = es_defend;
         return;
     }
-    durView_msg("- - - Some stuff has been typed. Please try again. - - -\n");
+    durView_msg("-> Some stuff has been typed. Please try again.\n");
     b->stage = es_attackView; //repeat
 }
 
@@ -129,8 +133,10 @@ void durModel(sBoard *b) {
     switch (b->stage) {
     case es_newGame:
         newGame(b);
+        break;
     case es_newFight:
-        newFight(b);//todo
+        newFight(b);
+        break;
     case es_attack:
         attack(b);
         break;
@@ -141,7 +147,7 @@ void durModel(sBoard *b) {
         b->stage = es_attack; //
         break;
     }
-    durView_msg("----------------------");
+//    durView_msg("----------------------\n");
 //    durView_dbg_board(b); //dbg
 }
 
@@ -154,5 +160,5 @@ void dur() {
         durControl(b1); //отделяем для автономности - возможность потока
     }
     free(b1);
-    durView_msg("Quit.");
+    durView_msg(".> Quit.");
 }
