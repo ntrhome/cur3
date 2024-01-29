@@ -69,9 +69,21 @@ static void durView_attack(const sBoard *b) {
     if (b->attack.count == 0) {
         s1 = "First"; s2 = "";
     } else {
-        s1 = "Next";  s2 = "'e'-enough, ";
+        s1 = "Next"; s2 = "'e'-enough, ";
     }
     printf("?> %s attack. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
+}
+
+static void durView_defend(const sBoard *b) {
+    durView_player(b->defender, b->desk.trump);
+    durView_fight(b);
+    char *s1, *s2;
+    if (b->defend.count == 5) {
+        s1 = "Last"; s2 = "'t'-take, ";
+    } else {
+        s1 = "Next"; s2 = "'t'-take, ";
+    }
+    printf("?> %s defend. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
 }
 
 void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
@@ -88,6 +100,10 @@ void durView(sBoard *b) { //in durView.c only this f have not const sBoard (beca
         case es_attackView:
             durView_attack((const sBoard *)b);
             b->stage = es_attackControl;
+            break;
+        case es_defendView:
+            durView_defend((const sBoard *)b);
+            b->stage = es_defendControl;
             break;
     }
 }

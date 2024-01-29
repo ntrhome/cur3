@@ -38,11 +38,19 @@ static void durControl_attack(sBoard *b) {
     b->stage = es_attackResult;
 }
 
+static void durControl_defend(sBoard *b) {
+    b->cmd = durControl_inputCardOrCommand();
+    b->stage = es_defendResult;
+}
+
 void durControl(sBoard *b) {
 //    printf("durControl\n");
     switch (b->stage) {
         case es_attackControl:
             durControl_attack(b);
+            break;
+        case es_defendControl:
+            durControl_defend(b);
             break;
     }
 }

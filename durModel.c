@@ -94,7 +94,7 @@ static void attack(sBoard *b) {
     //cheks
     b->stage = es_attackView;
 }
-//-----------------------------------------
+
 static int isFightsHasRank(const sBoard *b, int rank) {
     for (int i = 0; i < b->attack.count; ++i) {
         if (rank == b->attack.card[i] % ed_ranks) return 1;
@@ -105,17 +105,53 @@ static int isFightsHasRank(const sBoard *b, int rank) {
     return 0;
 }
 static void attackResult(sBoard *b) {
-    if (b->cmd > 1000) { //cmd
+    if (b->cmd > 1000) { //cmd (b->cmd = es_cmd_wrong; es_cmd_take; es_cmd_enough; es_cmd_newGame; es_cmd_quit; //card)
         if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
+        b->cmd = es_cmd_wrong;
     } else if ( //card:
-                b->attacker->holder[b->cmd]
-                &&
-                (
+        b->attacker->holder[b->cmd]
+        &&
+        (
+            (b->attack.count == 0) //first attack
+            ||
+            isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
+        )
+    )
+    {
+        b->attacker->holder[b->cmd] = 0;
+        --b->attacker->count;
+        b->attack.card[b->attack.count++] = b->cmd;
+        history(&b->history, b->cmd, ep_attack);
+        b->stage = es_defend;
+        return;
+    }
+    if (b->cmd == es_cmd_wrong) {
+        durView_msg("-> Some stuff has been typed. Please try again.\n");
+    } else {
+        durView_msg("-> Some unacceptable has been typed. Please try again.\n");
+    }
+    b->stage = es_attackView; //repeat
+}
+
+//-----------------------------------------
+static void defend(sBoard *b) {
+    //cheks
+    b->stage = es_defendView;
+}
+static void defendResult(sBoard *b) {
+    if (b->cmd > 1000) { //cmd (b->cmd = es_cmd_wrong; es_cmd_take; es_cmd_enough; es_cmd_newGame; es_cmd_quit; //card)
+        if (b->cmd == es_cmd_enough) { b->stage = es_defend; return; }//todo
+        if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
+        b->cmd = es_cmd_wrong;
+    } else if ( //card:
+            b->attacker->holder[b->cmd]
+            &&
+            (
                     (b->attack.count == 0) //first attack
                     ||
                     isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
-                )
+            )
             )
     {
         b->attacker->holder[b->cmd] = 0;
@@ -125,7 +161,11 @@ static void attackResult(sBoard *b) {
         b->stage = es_defend;
         return;
     }
-    durView_msg("-> Some stuff has been typed. Please try again.\n");
+    if (b->cmd == es_cmd_wrong) {
+        durView_msg("-> Some stuff has been typed. Please try again.\n");
+    } else {
+        durView_msg("-> Some unacceptable has been typed. Please try again.\n");
+    }
     b->stage = es_attackView; //repeat
 }
 
@@ -144,7 +184,10 @@ void durModel(sBoard *b) {
         attackResult(b);
         break;
     case es_defend:
-        b->stage = es_attack; //
+        defend(b);
+        break;
+    case es_defendResult:
+        defendResult(b);
         break;
     }
 //    durView_msg("----------------------\n");
