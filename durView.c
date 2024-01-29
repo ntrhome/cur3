@@ -10,21 +10,9 @@ static const char *const colorSuit[] = {
     DUR_COLOR_F256(196)
 };
 
-static void durView_score(const sBoard *b) {
-    printf(".> Score: [%d:%d].\n", b->left.score, b->right.score);
-}
-
-static void durView_cards(int count, const int *card) {
-    char *s = "";
-    for (int position = 0; position < count; ++position) {
-        printf("%s%s%c%c%s", s, colorSuit[card[position] / ed_ranks], ranks[card[position] % ed_ranks], suits[card[position] / ed_ranks], colorReset);
-        s = ".";
-    }
-}
-
 static void durView_newGame(const sBoard *b) {
     printf("%s\n", ".> !!!!!!!!!!!!!!!! New game !!!!!!!!!!!!!!!!");
-    durView_score((const sBoard *)b);
+    printf(".> Score: [%d:%d].\n", b->left.score, b->right.score);
 }
 
 static void durView_newFight(const sBoard *b) {
@@ -53,7 +41,13 @@ static void durView_player(const sPlayer *p, int trump) {
     }
     printf("].\n");
 }
-
+static void durView_cards(int count, const int *card) {
+    char *s = "";
+    for (int position = 0; position < count; ++position) {
+        printf("%s%s%c%c%s", s, colorSuit[card[position] / ed_ranks], ranks[card[position] % ed_ranks], suits[card[position] / ed_ranks], colorReset);
+        s = ".";
+    }
+}
 static void durView_fight(const sBoard *b) {
     printf(".> Fight:\n        - attack: [");
     durView_cards(b->attack.count, b->attack.card);
@@ -61,7 +55,6 @@ static void durView_fight(const sBoard *b) {
     durView_cards(b->defend.count, b->defend.card);
     printf("].\n");
 }
-
 static void durView_attack(const sBoard *b) {
     durView_player(b->attacker, b->desk.trump);
     durView_fight(b);
@@ -148,7 +141,8 @@ static void durView_dbg_boardDesk(const sDesk *d) {//ASCII
 void durView_dbg_board(const sBoard *b) {
     printf("= = = = = = = = = = durView_dbg_board = (sizeof(sBoard)=%lu, match_id = %p, stage = %d)\n", sizeof(sBoard), b, b->stage);
     durView_dbg_boardDesk(&b->desk);
-    durView_score(b);
+//    durView_score(b);
+    printf("> Score: [%d:%d].\n", b->left.score, b->right.score);
     printf("> Turn: winner=%s, attacker=%s, defender=%s, dealer=%s\n",
            (b->winner   == NULL) ? "Nemo" : (b->winner  ==&b->left)?"Left":"Right",
            (b->attacker == NULL) ? "Nemo" : (b->attacker==&b->left)?"Left":"Right",

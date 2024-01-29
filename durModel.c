@@ -5,11 +5,6 @@
 #include "durView.h"
 #include "durControl.h"
 
-static void history(sHistory *h, int card, ep place) {
-    h->card[h->count] = card;
-    h->place[h->count++] = place;
-}
-
 static sBoard *newBoard() {
     sBoard *b = malloc(sizeof(sBoard));
     for (int i = 0; i < ed_cards; ++i) b->desk.card[i] = i; //cards filling
@@ -71,11 +66,16 @@ static void newGame(sBoard *b) {
     b->stage = es_newGameView;
 }
 
+static void history(sHistory *h, int card, ep place) {
+    h->card[h->count] = card;
+    h->place[h->count++] = place;
+}
+
 static void newFight_dealing(sBoard *b) {
     sPlayer *p = b->dealer;
     for (int n = 0; n < ed_players; ++n) {
         while (p->count < ed_normal && b->desk.count > 0) {
-            p->holder[b->desk.card[--b->desk.count]] = 1;
+            p->holder[b->desk.card[--b->desk.count]] = true;
             ++p->count;
             history(&b->history, b->desk.card[b->desk.count], p->place);
         }

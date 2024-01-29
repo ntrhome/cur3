@@ -18,7 +18,7 @@ typedef struct {
 
 typedef struct {
     int count;
-    int holder [ed_cards]; // ..x...x.......x.x.
+    bool holder [ed_cards]; // ..x...x.......x.x.
     ep place;
     int score;
 } sPlayer;
@@ -37,13 +37,13 @@ typedef struct {
 typedef struct {
     sDesk desk;
     sPlayer left, right;
-    sPlayer *winner, *attacker, *defender, *dealer; //role
+    sPlayer *winner, *attacker, *defender, *dealer; //roles
     sFight attack;
     sFight defend;
     sHistory history;
     es stage;
     es cmd;
-}sBoard;
+} sBoard;
 
 void dur();
 
