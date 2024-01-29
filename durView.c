@@ -48,35 +48,29 @@ static void durView_cards(int count, const int *card) {
         s = ".";
     }
 }
-static void durView_fight(const sBoard *b) {
+static void durView_fight(const sBoard *b, bool isAttack) {
+    sPlayer *p = (isAttack)?b->attacker:b->defender;
+    durView_player(p, b->desk.trump);
     printf(".> Fight:\n        - attack: [");
     durView_cards(b->attack.count, b->attack.card);
     printf("]\n        - defend: [");
     durView_cards(b->defend.count, b->defend.card);
     printf("].\n");
-}
-static void durView_attack(const sBoard *b) {
-    durView_player(b->attacker, b->desk.trump);
-    durView_fight(b);
     char *s1, *s2;
-    if (b->attack.count == 0) {
-        s1 = "First"; s2 = "";
-    } else {
-        s1 = "Next"; s2 = "'e'-enough, ";
+    if (isAttack) {
+        if (b->attack.count == 0) {
+            s1 = "First attack"; s2 = "";
+        } else {
+            s1 = "Attack"; s2 = "'e'-enough, ";
+        }
+    } else { //defend
+        if (b->defend.count == ed_normal-1) {
+            s1 = "Last defend"; s2 = "'t'-take, ";
+        } else {
+            s1 = "Defend"; s2 = "'t'-take, ";
+        }
     }
-    printf("?> %s attack. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
-}
-
-static void durView_defend(const sBoard *b) {
-    durView_player(b->defender, b->desk.trump);
-    durView_fight(b);
-    char *s1, *s2;
-    if (b->defend.count == 5) {
-        s1 = "Last"; s2 = "'t'-take, ";
-    } else {
-        s1 = "Next"; s2 = "'t'-take, ";
-    }
-    printf("?> %s defend. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
+    printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
 }
 
 void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
@@ -91,11 +85,11 @@ void durView(sBoard *b) { //in durView.c only this f have not const sBoard (beca
             b->stage = es_attack;
             break;
         case es_attackView:
-            durView_attack((const sBoard *)b);
+            durView_fight((const sBoard *)b, true);
             b->stage = es_attackControl;
             break;
         case es_defendView:
-            durView_defend((const sBoard *)b);
+            durView_fight((const sBoard *)b, false);
             b->stage = es_defendControl;
             break;
     }
@@ -150,7 +144,7 @@ void durView_dbg_board(const sBoard *b) {
            (b->dealer   == NULL) ? "Nemo" : (b->dealer  ==&b->left)?"Left":"Right");
     durView_player(&b->left , b->desk.trump);
     durView_player(&b->right, b->desk.trump);
-    durView_fight(b);
+//    durView_fight(b, );
     durView_dbg_boardHistory(&b->history);
 }
 

@@ -181,7 +181,7 @@ void durModel(sBoard *b) {
         attack(b);
         break;
     case es_attackResult:
-        attackResult(b);
+        attackResult(b); //todo
         break;
     case es_defend:
         defend(b);

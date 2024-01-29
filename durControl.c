@@ -33,24 +33,16 @@ static es durControl_inputCardOrCommand() { //return card [0..ed_cards) or comma
     return suit * ed_ranks + rank; //card
 }
 
-static void durControl_attack(sBoard *b) {
-    b->cmd = durControl_inputCardOrCommand();
-    b->stage = es_attackResult;
-}
-
-static void durControl_defend(sBoard *b) {
-    b->cmd = durControl_inputCardOrCommand();
-    b->stage = es_defendResult;
-}
-
 void durControl(sBoard *b) {
 //    printf("durControl\n");
     switch (b->stage) {
         case es_attackControl:
-            durControl_attack(b);
+            b->cmd = durControl_inputCardOrCommand();
+            b->stage = es_attackResult;
             break;
         case es_defendControl:
-            durControl_defend(b);
+            b->cmd = durControl_inputCardOrCommand();
+            b->stage = es_defendResult;
             break;
     }
 }
