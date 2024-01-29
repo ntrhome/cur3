@@ -12,8 +12,8 @@ static es durControl_inputCardOrCommand() { //return card [0..ed_cards) or comma
     if (s[0] > 96 && s[0] < 123) s[0] -= ('a' - 'A'); //toupper(s[0])
     //command
     if (s[1] == 0) {
-        if(s[0] == 'T') return es_cmd_take;
         if(s[0] == 'E') return es_cmd_enough;
+        if(s[0] == 'T') return es_cmd_take;
         if(s[0] == 'Y') return es_cmd_newGame;
         if(s[0] == 'Q') return es_cmd_quit;
         return es_cmd_wrong;

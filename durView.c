@@ -19,11 +19,11 @@ static void durView_newFight(const sBoard *b) {
     printf(".> New fight. Attacker - %s player.\n", (b->attacker->place)?"Right":"Left");
 }
 
-static void durView_player(const sPlayer *p, int trump) {
-    printf(".> Player %s: (%d) [%s%c%s]\n[", (p->place) ? "Right" : "Left", p->count, colorSuit[trump], suits[trump], colorReset);
+static void durView_player(const sPlayer *p) {
+    printf(".> Player %s: (%d)\n[", (p->place) ? "Right" : "Left", p->count);
     char *s = ""; //by suit
     for (int position = 0; position < ed_cards; ++position) {
-        if (p->holder[position]) {
+        if (p->hold[position]) {
             printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks], suits[position / ed_ranks], colorReset);
             s = ".";
         }
@@ -33,7 +33,7 @@ static void durView_player(const sPlayer *p, int trump) {
     for (int rank = 0; rank < ed_ranks; ++rank) {
         for (int suit = 0; suit < ed_suits; ++suit) {
             int position = suit * ed_ranks + rank;
-            if (p->holder[position]) {
+            if (p->hold[position]) {
                 printf("%s%s%c%c%s", s, colorSuit[position / ed_ranks], ranks[position % ed_ranks], suits[position / ed_ranks], colorReset);
                 s = ".";
             }
@@ -48,22 +48,22 @@ static void durView_cards(int count, const int *card) {
         s = ".";
     }
 }
-static void durView_fight(const sBoard *b, bool isAttack) {
-    sPlayer *p = (isAttack)?b->attacker:b->defender;
-    durView_player(p, b->desk.trump);
-    printf(".> Fight:\n        - attack: [");
+static void durView_fight(const sBoard *b) {
+    printf(".> Fight [%s%c%s]:\n        - attack: [", colorSuit[b->desk.trump], suits[b->desk.trump], colorReset);
     durView_cards(b->attack.count, b->attack.card);
     printf("]\n        - defend: [");
     durView_cards(b->defend.count, b->defend.card);
     printf("].\n");
+}
+static void durView_prompt(const sBoard *b) {
     char *s1, *s2;
-    if (isAttack) {
+    if (b->stage == es_attackView) {
         if (b->attack.count == 0) {
             s1 = "First attack"; s2 = "";
         } else {
             s1 = "Attack"; s2 = "'e'-enough, ";
         }
-    } else { //defend
+    } else { //es_defendView
         if (b->defend.count == ed_normal-1) {
             s1 = "Last defend"; s2 = "'t'-take, ";
         } else {
@@ -71,6 +71,16 @@ static void durView_fight(const sBoard *b, bool isAttack) {
         }
     }
     printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
+}
+static void durView_attack(const sBoard *b) {
+    durView_player(b->attacker);
+    durView_fight((const sBoard *)b);
+    durView_prompt((const sBoard *)b);
+}
+static void durView_defend(const sBoard *b) {
+    durView_player(b->defender);
+    durView_fight((const sBoard *)b);
+    durView_prompt((const sBoard *)b);
 }
 
 void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
@@ -85,12 +95,20 @@ void durView(sBoard *b) { //in durView.c only this f have not const sBoard (beca
             b->stage = es_attack;
             break;
         case es_attackView:
-            durView_fight((const sBoard *)b, true);
+            durView_attack((const sBoard *)b);
             b->stage = es_attackControl;
             break;
         case es_defendView:
-            durView_fight((const sBoard *)b, false);
+            durView_defend((const sBoard *)b);
             b->stage = es_defendControl;
+            break;
+        case es_attackResultEnoughView:
+            printf(".> The fight is over by the attacker.\n");
+            b->stage = es_fightCloseAsDefended;
+            break;
+        case es_defendResultTookView:
+            printf(".> The fight is taken by the defender.\n");
+            b->stage = es_fightCloseAsTook;
             break;
     }
 }
@@ -142,9 +160,9 @@ void durView_dbg_board(const sBoard *b) {
            (b->attacker == NULL) ? "Nemo" : (b->attacker==&b->left)?"Left":"Right",
            (b->defender == NULL) ? "Nemo" : (b->defender==&b->left)?"Left":"Right",
            (b->dealer   == NULL) ? "Nemo" : (b->dealer  ==&b->left)?"Left":"Right");
-    durView_player(&b->left , b->desk.trump);
-    durView_player(&b->right, b->desk.trump);
-//    durView_fight(b, );
+    durView_player(&b->left);
+    durView_player(&b->right);
+    durView_fight(b);
     durView_dbg_boardHistory(&b->history);
 }
 

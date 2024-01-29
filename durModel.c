@@ -47,8 +47,8 @@ static void newGame_playersInit(sBoard *b) {
     b->left.count = 0;
     b->right.count = 0;
     for (int i = 0; i < ed_cards; ++i) { //player holders filling
-        b->left.holder[i]  = 0;
-        b->right.holder[i] = 0;
+        b->left.hold[i]  = 0;
+        b->right.hold[i] = 0;
     }
     if(b->winner == NULL) { //roles :drawing (first or drawn game)
         srand((int)time(NULL));
@@ -75,7 +75,7 @@ static void newFight_dealing(sBoard *b) {
     sPlayer *p = b->dealer;
     for (int n = 0; n < ed_players; ++n) {
         while (p->count < ed_normal && b->desk.count > 0) {
-            p->holder[b->desk.card[--b->desk.count]] = true;
+            p->hold[b->desk.card[--b->desk.count]] = true;
             ++p->count;
             history(&b->history, b->desk.card[b->desk.count], p->place);
         }
@@ -95,31 +95,32 @@ static void attack(sBoard *b) {
     b->stage = es_attackView;
 }
 
-static int isFightsHasRank(const sBoard *b, int rank) {
+static void gameClose(sBoard *b) {
+
+}
+static void fightCloseAsDefended(sBoard *b) {
+    sPlayer *p = b->attacker; //change attacker/defender
+    b->attacker = b->defender;
+    b->defender = p;
+    b->stage = es_newFight;
+}
+static bool attackResult_isFightHasRank(const sBoard *b) {
+    int rank = (int)b->cmd % ed_ranks;
     for (int i = 0; i < b->attack.count; ++i) {
-        if (rank == b->attack.card[i] % ed_ranks) return 1;
+        if (rank == b->attack.card[i] % ed_ranks) return true;
     }
     for (int i = 0; i < b->defend.count; ++i) {
-        if (rank == b->defend.card[i] % ed_ranks) return 1;
+        if (rank == b->defend.card[i] % ed_ranks) return true;
     }
-    return 0;
+    return false;
 }
 static void attackResult(sBoard *b) {
     if (b->cmd > 1000) { //cmd (b->cmd = es_cmd_wrong; es_cmd_take; es_cmd_enough; es_cmd_newGame; es_cmd_quit; //card)
-        if (b->attack.count > 0 && b->cmd == es_cmd_enough) { b->stage = es_defend; return; }
+        if (b->cmd == es_cmd_enough && b->attack.count > 0) { b->stage = es_attackResultEnoughView; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
         b->cmd = es_cmd_wrong;
-    } else if ( //card:
-        b->attacker->holder[b->cmd]
-        &&
-        (
-            (b->attack.count == 0) //first attack
-            ||
-            isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
-        )
-    )
-    {
-        b->attacker->holder[b->cmd] = 0;
+    } else if (b->attacker->hold[b->cmd] && ((b->attack.count == 0) || attackResult_isFightHasRank(b))) { //card
+        b->attacker->hold[b->cmd] = 0;
         --b->attacker->count;
         b->attack.card[b->attack.count++] = b->cmd;
         history(&b->history, b->cmd, ep_attack);
@@ -139,26 +140,37 @@ static void defend(sBoard *b) {
     //cheks
     b->stage = es_defendView;
 }
+static void fightCloseAsTook(sBoard *b) {
+    for (int i = 0; i < b->attack.count; ++i) {
+        b->defender->hold[b->attack.card[i]] = true;
+        ++b->defender->count;
+        history(&b->history, b->attack.card[i], b->defender->place);
+    }
+    for (int i = 0; i < b->defend.count; ++i) {
+        b->defender->hold[b->defend.card[i]] = true;
+        ++b->defender->count;
+        history(&b->history, b->defend.card[i], b->defender->place);
+    }
+    b->stage = es_newFight;
+}
+static bool defendResult_isCardBeatCard(sBoard *b) {
+    if (b->cmd / ed_ranks == b->attack.card[b->attack.count-1] / ed_ranks) { //same suit
+        return b->cmd % ed_ranks > b->attack.card[b->attack.count-1] % ed_ranks;
+    } else {
+        return b->cmd / ed_ranks == b->desk.trump;
+    }
+}
 static void defendResult(sBoard *b) {
     if (b->cmd > 1000) { //cmd (b->cmd = es_cmd_wrong; es_cmd_take; es_cmd_enough; es_cmd_newGame; es_cmd_quit; //card)
-        if (b->cmd == es_cmd_enough) { b->stage = es_defend; return; }//todo
+        if (b->cmd == es_cmd_take) { b->stage = es_defendResultTookView; return; }
         if (b->cmd == es_cmd_quit) { b->stage = es_cmd_quit; return; }
         b->cmd = es_cmd_wrong;
-    } else if ( //card:
-            b->attacker->holder[b->cmd]
-            &&
-            (
-                    (b->attack.count == 0) //first attack
-                    ||
-                    isFightsHasRank(b, (int) b->cmd % ed_ranks) //next attack
-            )
-            )
-    {
-        b->attacker->holder[b->cmd] = 0;
-        --b->attacker->count;
-        b->attack.card[b->attack.count++] = b->cmd;
-        history(&b->history, b->cmd, ep_attack);
-        b->stage = es_defend;
+    } else if (b->defender->hold[b->cmd] && defendResult_isCardBeatCard(b)) { //card
+        b->defender->hold[b->cmd] = 0;
+        --b->defender->count;
+        b->defend.card[b->defend.count++] = b->cmd;
+        history(&b->history, b->cmd, ep_defend);
+        b->stage = es_attack;
         return;
     }
     if (b->cmd == es_cmd_wrong) {
@@ -166,29 +178,35 @@ static void defendResult(sBoard *b) {
     } else {
         durView_msg("-> Some unacceptable has been typed. Please try again.\n");
     }
-    b->stage = es_attackView; //repeat
+    b->stage = es_defendView; //repeat
 }
 
 void durModel(sBoard *b) {
     switch (b->stage) {
-    case es_newGame:
-        newGame(b);
-        break;
-    case es_newFight:
-        newFight(b);
-        break;
-    case es_attack:
-        attack(b);
-        break;
-    case es_attackResult:
-        attackResult(b); //todo
-        break;
-    case es_defend:
-        defend(b);
-        break;
-    case es_defendResult:
-        defendResult(b);
-        break;
+        case es_newGame:
+            newGame(b);
+            break;
+        case es_newFight:
+            newFight(b);
+            break;
+        case es_attack:
+            attack(b);
+            break;
+        case es_attackResult:
+            attackResult(b);
+            break;
+        case es_defend:
+            defend(b);
+            break;
+        case es_defendResult:
+            defendResult(b); //todo
+            break;
+        case es_fightCloseAsDefended:
+            fightCloseAsDefended(b);
+            break;
+        case es_fightCloseAsTook:
+            fightCloseAsTook(b);
+            break;
     }
 //    durView_msg("----------------------\n");
 //    durView_dbg_board(b); //dbg
