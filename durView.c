@@ -55,6 +55,19 @@ static void view_fight(const sBoard *b) {
     printf("].\n");
 }
 
+static void view_prompt(const sBoard *b) {
+    char *s1, *s2;
+    if (b->stage == es_attackView) {
+        s1 = "Attack";
+        s2 = (b->fight) ? "'e'-enough, " : "";
+    } else { //es_defendView
+        s1 = "Defend";
+        s2 = "'t'-take, ";
+    }
+    printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
+}
+
+
 //static void durView_prompt(const sBoard *b) {
 //    char *s1, *s2;
 //    if (b->stage == es_attackView) {
@@ -72,11 +85,11 @@ static void view_fight(const sBoard *b) {
 //    }
 //    printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
 //}
-//static void durView_attack(const sBoard *b) {
+static void view_attack(const sBoard *b) {
 //    durView_symPlayer(b->attacker);
-//    durView_fight((const sBoard *)b);
-//    durView_prompt((const sBoard *)b);
-//}
+    view_fight((const sBoard *)b);
+    view_prompt((const sBoard *)b);
+}
 //static void durView_defend(const sBoard *b) {
 //    durView_symPlayer(b->defender);
 //    durView_fight((const sBoard *)b);
@@ -84,28 +97,29 @@ static void view_fight(const sBoard *b) {
 //}
 
 static void view_newGame(const sBoard *b) {
-    printf("%s\n", "!> New game!\n");
+    printf("!> - - - Ta-dam! New game. - - -\n");
     view_score(b);
 }
 
-//static void durView_newFight(const sBoard *b) {
-//    printf(".> New fight. Attacker - %s player.\n", (b->attacker->place)?"Right":"Left");
-//}
+static void view_newFight(const sBoard *b) {
+    printf(".> New fight. Attacker: %s player.\n", d_symPlayer[b->attacker->place]);
+}
 
-void durView(const sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
-    printf("durView\n"); //dbg
+void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
+    //printf("durView\n"); //dbg
     switch (b->stage) { //пока что без потоков и надобности синхронизации - пытаемся отработать на общих стейджах
-        case es_newGame:
+        case es_newGameView:
             view_newGame((const sBoard *)b);
+            b->stage = es_newFight;
             break;
-//        case es_newFightView:
-//            durView_newFight((const sBoard *)b);
-//            b->stage = es_attack;
-//            break;
-//        case es_attackView:
-//            durView_attack((const sBoard *)b);
-//            b->stage = es_attackControl;
-//            break;
+        case es_newFightView:
+            view_newFight((const sBoard *)b);
+            b->stage = es_attack;
+            break;
+        case es_attackView:
+            view_attack((const sBoard *)b);
+            b->stage = es_attackControl;
+            break;
 //        case es_defendView:
 //            durView_defend((const sBoard *)b);
 //            b->stage = es_defendControl;

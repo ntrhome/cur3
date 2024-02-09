@@ -2,7 +2,7 @@
 #include <time.h>   //for srand
 #include "dur.h"
 #include "durView.h"
-//#include <stdio.h>
+#include "durControl.h"
 
 static int suit[ed_cards] = { 0,0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,3 };
 static int rank[ed_cards] = { 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8 };
@@ -66,7 +66,6 @@ static void newGame(sBoard *b) {
     b->fight = 0;
     b->history.count = 0;
     ++b->game;
-    b->stage = es_newFight;
 }
 
 static void history(sHistory *h, int card, ep place) {
@@ -93,10 +92,12 @@ static void newFight(sBoard *b) {
     newFight_dealing(b);
     b->dealer = b->attacker; //for next newFight
     b->fight = 0; //fight reset
-    b->stage = es_attack;
 }
 
-
+static void attack(sBoard *b) {
+    //cheks
+    b->stage = es_attackView;
+}
 
 
 
@@ -128,17 +129,20 @@ void durModel(sBoard *b) {
     switch (b->stage) {
         case es_newGame:
             newGame(b);
+            b->stage = es_newGameView; //es_newFight
             break;
         case es_newFight:
             newFight(b);
+            b->stage = es_newFightView; //es_attack
             break;
         case es_attack:
-//            attack(b);
-            b->stage = es_cmd_quit;
+            attack(b);
+            b->stage = es_attackView;
             break;
-//        case es_attackResult:
+        case es_attackResult:
 //            attackResult(b);
-//            break;
+            b->stage = es_cmdQuit;
+            break;
 //        case es_defend:
 //            defend(b);
 //            break;
@@ -158,10 +162,10 @@ void dur() {
     sBoard *b1 = newBoard();
     do {
         durModel(b1);
-        durView((const sBoard *)b1);    //отделяем для автономности - возможность потока (в потоках - либо учим симафоры, либо - проще - бьём stage на подуровни ..View и ..Control для синхронизации
-//        durControl(b1); //отделяем для автономности - возможность потока
-    } while (b1->stage != es_cmd_quit);
-    dbgView_board(b1);
+        durView(b1);    //отделяем для автономности - возможность потока (в потоках - либо учим симафоры, либо - проще - бьём stage на подуровни ..View и ..Control для синхронизации
+        durControl(b1); //отделяем для автономности - возможность потока
+    } while (b1 != NULL && b1->stage != es_cmdQuit);
+//    dbgView_board(b1);
     free(b1);
 //    durView_msg(".> Quit.");
 }

@@ -4,7 +4,7 @@
 //#include "durModel.h"
 #include "dur.h"
 
-void durView(const sBoard *b);
+void durView(sBoard *b);
 
 
 #ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
