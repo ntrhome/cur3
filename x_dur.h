@@ -39,4 +39,11 @@ typedef struct {
     es cmd;
 } sMatch;
 
+
+
+
+
+
+void dur();
+
 #endif //DUR_DUR_H

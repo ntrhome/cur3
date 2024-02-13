@@ -11,8 +11,8 @@ set(CMAKE_C_STANDARD 17)
 #set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -v")
 
 add_executable(dur main.c
-#        durModel.c
-#        durModel.h
+        durModel.c
+        durModel.h
         durView.c
         durView.h
         durControl.c
