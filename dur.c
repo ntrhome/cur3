@@ -5,7 +5,7 @@
 static int suit[ed_cards] = { 0,0,0,0,0,0,0,0,0, 1,1,1,1,1,1,1,1,1, 2,2,2,2,2,2,2,2,2, 3,3,3,3,3,3,3,3,3 };
 static int rank[ed_cards] = { 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8, 0,1,2,3,4,5,6,7,8 };
 
-static sMatch *durModel_newMatch() {
+static sMatch *newMatch() {
     sMatch *m = malloc(sizeof(sMatch));
     if (m != NULL) {
         for (int i = 0; i < ed_cards; ++i) m->desk.card[i] = i;

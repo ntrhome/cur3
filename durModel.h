@@ -4,7 +4,7 @@
 #include "dur.h"
 
 
-
+void dur();
 
 #define DUR_DEBUG
 
