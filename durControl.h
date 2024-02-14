@@ -1,6 +1,0 @@
-#ifndef DUR_DURCONTROL_H
-#define DUR_DURCONTROL_H
-
-
-
-#endif //DUR_DURCONTROL_H
