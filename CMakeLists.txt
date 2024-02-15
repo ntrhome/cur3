@@ -13,8 +13,8 @@ set(CMAKE_C_STANDARD 11)
 add_executable(dur main.c main.h
 #        durModel.c
 #        durModel.h
-#        durView.c
-#        durView.h
+        durView.c
+        durView.h
 #        durControl.c
 #        durControl.h
         dur.c

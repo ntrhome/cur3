@@ -1,6 +1,6 @@
 #pragma once
 
-#define MAIN_BOOL
+#define MAIN_BOOL //#include <stdbool.h>
 #ifdef MAIN_BOOL
     #define bool int
     enum {false, true};
