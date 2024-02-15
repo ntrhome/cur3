@@ -27,7 +27,7 @@ void durView_match(sMatch *m) {
            d_symPlayer[(m->attacker==NULL)?2:m->attacker->place],
            d_symPlayer[(m->defender==NULL)?2:m->defender->place],
            d_symPlayer[(m->dealer  ==NULL)?2:m->dealer  ->place]);
-    printf(".> Desk: (%d) [%s]\n[", m->desk.count, d_symTrump[m->desk.trump]);
+    printf(".> Desk: (%d) [%s]\n[", m->desk.count, d_symTrump[m->desk.card[0] / ed_ranks]);
     char *s = "";
     for (int i = 0; i < ed_cards; ++i) { printf("%s%02d", s, i); s = "-"; }
     printf("]-id\n[");

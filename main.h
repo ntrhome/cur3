@@ -6,6 +6,11 @@
     enum {false, true};
 #endif //MAIN_BOOL
 
+#define MAIN_DEF //#include <stddef.h>
+#ifdef MAIN_DEF
+    #define NULL ((void *)0)
+#endif //MAIN_DEF
+
 #define MAIN_DEBUG
 #ifdef MAIN_DEBUG
     #include <stdio.h>
