@@ -2,6 +2,12 @@
 #include "main.h"
 #include <stdlib.h> //for srand, rand, malloc, free
 
+sMatch *iterator_sDur(void *set) {
+    sDur *dur = (sDur *)set;
+
+    return dur->match[0];
+}
+
 sMatch *durNewMatch() {
     sMatch *m = malloc(sizeof(sMatch));
     LOGIF(m == NULL)

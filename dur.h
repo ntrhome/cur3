@@ -37,4 +37,12 @@ typedef struct {
     es cmd;
 } sMatch;
 
+typedef struct {
+    int count;
+    int max;
+    sMatch *match[3];
+    sMatch *(*iterator)(void *set);
+} sDur;
+
+sMatch *iterator_sDur(void *set);
 sMatch *durNewMatch();
