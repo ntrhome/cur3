@@ -89,20 +89,27 @@ static void attack(sMatch *m) {
     m->stage = es_attackView;
 }
 
+static void fight2pile(sMatch *m) {
+    int frameBegin = m->history.count - m->fight;
+    int frameEnd   = m->history.count;
+    for (int i = frameBegin; i < frameEnd; ++i) {
+        m->desk.place[m->history.card[i]] = ep_pile;
+        history(&m->history, m->history.card[i], ep_pile);
+    }
+    sPlayer *depot = m->attacker; m->attacker = m->defender; m->defender = depot;
+}
+
 static void attackResult(sMatch *m) {
     if (m->cmd < 0) { //cmd
         if (m->cmd == es_cmdEnough && m->fight) {
-            int frameBegin = m->history.count - m->fight;
-            int frameEnd   = m->history.count;
-            for (int i = frameBegin; i < frameEnd; ++i) {
-                m->desk.place[m->history.card[i]] = ep_pile;
-                history(&m->history, m->history.card[i], ep_pile);
-            }
-            sPlayer *depot = m->attacker; m->attacker = m->defender; m->defender = depot;
+            fight2pile(m);
             m->stage = es_newFight;
             return;
         }
-        if (m->cmd == es_cmdQuit) { m->stage = es_cmdQuit; return; }
+        if (m->cmd == es_cmdQuit) {
+            m->stage = es_cmdQuit;
+            return;
+        }
         m->cmd = es_cmdWrong; //todo
     } else if (b->attacker->hold[b->cmd] && ((b->attack.count == 0) || attackResult_isFightHasRank(b))) { //card
         b->attacker->hold[b->cmd] = 0;
