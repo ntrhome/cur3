@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "durView.h"
+#include <stdio.h>
 
 #define R "\033[0m" //reset
 #define S "\033[1m\033[38;5;127m"
@@ -12,178 +12,148 @@ static const char *const d_symTrump [4] = {S"s"R, C"c"R, D"d"R, H"h"R}; //Spades
 static const char *const d_symPlace [6] = {S"LL"R, C"RR"R, D"aa"R, H"dd"R, P"PP"R, "DD"};
 static const char *const d_symPlayer[3] = {S"Left"R, C"Right"R, D"Nemo"R};
 
-//static void view_score(const sBoard *b) {
-//    printf(".> Score: (%d) [%d:%d].\n", b->game, b->left.score, b->right.score);
-//}
-//
-//static void view_player(const  sDesk *d, const  sPlayer *p) {
-//    printf(".> Player %s: (%d)\n[", d_symPlayer[p->place], p->count);
-//    char *s = "";
-//    for (int card = 0; card < ed_cards; ++card) { //by suit
-//        if (d->place[card] == p->place) {
-//            printf("%s%s", s, d_symCard[card]);
-//            s = ".";
-//        }
-//    }
-//    printf("] /%s[", (p->count > 16 ) ? "\n" : " ");
-//    s = ""; //by ranks//
-//    for (int rank = 0; rank < ed_ranks; ++rank) { //by rank
-//        for (int suit = 0; suit < ed_suits; ++suit) {
-//            int card = suit * ed_ranks + rank;
-//            if (d->place[card] == p->place) {
-//                printf("%s%s", s, d_symCard[card]);
-//                s = ".";
-//            }
-//        }
-//    }
-//    printf("].\n");
-//}
-//
-//static void view_fight(const sBoard *b) {
-//    printf(".> Fight: (%d) [%s]\n - attack: [", b->fight, d_symTrump[b->desk.trump]);
-//    char *s = "";
-//    for (int i = b->history.count - b->fight; i < b->history.count; i+=2) {
-//        printf("%s%s", s, d_symCard[b->history.card[i]]);
-//        s = ".";
-//    }
-//    printf("]\n - defend: [");
-//    s = "";
-//    for (int i = b->history.count - b->fight + 1; i < b->history.count; i+=2) {
-//        printf("%s%s", s, d_symCard[b->history.card[i]]);
-//        s = ".";
-//    }
-//    printf("].\n");
-//}
-//
-//static void view_prompt(const sBoard *b) {
-//    char *s1, *s2;
-//    if (b->stage == es_attackView) {
-//        s1 = "Attack";
-//        s2 = (b->fight) ? "'e'-enough, " : "";
-//    } else { //es_defendView
-//        s1 = "Defend";
-//        s2 = "'t'-take, ";
-//    }
-//    printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
-//}
-//
-//
-////static void durView_prompt(const sBoard *b) {
-////    char *s1, *s2;
-////    if (b->stage == es_attackView) {
-////        if (b->attack.count == 0) {
-////            s1 = "First attack"; s2 = "";
-////        } else {
-////            s1 = "Attack"; s2 = "'e'-enough, ";
-////        }
-////    } else { //es_defendView
-////        if (b->defend.count == ed_normal-1) {
-////            s1 = "Last defend"; s2 = "'t'-take, ";
-////        } else {
-////            s1 = "Defend"; s2 = "'t'-take, ";
-////        }
-////    }
-////    printf("?> %s. Type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s1, s2);
-////}
-//static void view_attack(const sBoard *b) {
-////    durView_symPlayer(b->attacker);
-//    view_fight((const sBoard *)b);
-//    view_prompt((const sBoard *)b);
-//}
-////static void durView_defend(const sBoard *b) {
-////    durView_symPlayer(b->defender);
-////    durView_fight((const sBoard *)b);
-////    durView_prompt((const sBoard *)b);
-////}
-//
-//static void view_newGame(const sBoard *b) {
-//    printf("!> - - - Ta-dam! New game. - - -\n");
-//    view_score(b);
-//}
-//
-//static void view_newFight(const sBoard *b) {
-//    printf(".> New fight. Attacker: %s player.\n", d_symPlayer[b->attacker->place]);
-//}
-//
-//void durView(sBoard *b) { //in durView.c only this f have not const sBoard (because b->stage)
-//    //printf("durView\n"); //dbg
-//    switch (b->stage) { //пока что без потоков и надобности синхронизации - пытаемся отработать на общих стейджах
-//        case es_newGameView:
-//            view_newGame((const sBoard *)b);
-//            b->stage = es_newFight;
-//            break;
-//        case es_newFightView:
-//            view_newFight((const sBoard *)b);
-//            b->stage = es_attack;
-//            break;
-//        case es_attackView:
-//            view_attack((const sBoard *)b);
-//            b->stage = es_attackControl;
-//            break;
-////        case es_defendView:
-////            durView_defend((const sBoard *)b);
-////            b->stage = es_defendControl;
-////            break;
-////        case es_attackResultEnoughView:
-////            printf(".> The fight is over by the attacker.\n");
-////            b->stage = es_fightCloseAsDefended;
-////            break;
-////        case es_defendResultTookView:
-////            printf(".> The fight is taken by the defender.\n");
-////            b->stage = es_fightCloseAsTook;
-////            break;
-//    }
-//}
-//
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-#ifdef DUR_DEBUG
+static const int cardByRankSuit[ed_ranks][ed_suits] = {
+        {0,9,18,27},
+        {1,10,19,28},
+        {2,11,20,29},
+        {3,12,21,30},
+        {4,13,22,31},
+        {5,14,23,32},
+        {6,15,24,33},
+        {7,16,25,34},
+        {8,17,26,35}
+};
 
-//static void dbgView_history(const sHistory *h) {
-//    printf(".> History: (%d)\n[", h->count);
-//    char *s = "";
-//    for (int i = 0; i < h->count; ++i) {
-//        printf("%s%s", s, d_symCard[h->card[i]]);
-//        s = ".";
-//    }
-//    printf("].\n");
-//}
-static void durView_desk(const sDesk *d) { //ASCII
-    printf(".> Desk: (%d) [%s]\n[", d->count, d_symTrump[d->trump]);
-    char *s = ""; for (int i = 0; i < ed_cards; ++i) printf("%s%02d", s, i), s = "-"; printf("]-position\n[");
-    s = ""; for (int i = 0; i < ed_cards; ++i) printf("%s%s", s, d_symCard[d->order[i]]), s = "."; printf("]-order\n[");
-    s = ""; for (int i = 0; i < ed_cards; ++i) printf("%s%02d", s, d->index[i]), s = "."; printf("]-index\n[");
-    s = ""; for (int i = 0; i < ed_cards; ++i) printf("%s%s", s, d_symPlace[d->place[d->order[i]]]), s = "."; printf("]-place.\n");
-}
-void durView_match(const sMatch *m) {
-    printf("= = = = = = = = = = dbgView_board = (sizeof(sBoard)=%lu, board_id = %p, stage = %d)\n", sizeof(sBoard), b, b->stage);
-    durView_desk(&m->desk);
-    view_score(b);
-    printf(".> Turn: winner=%s, attacker=%s, defender=%s, dealer=%s.\n",
-           d_symPlayer[(b->winner==NULL)?2:b->winner->place],
-           d_symPlayer[(b->attacker==NULL)?2:b->attacker->place],
-           d_symPlayer[(b->defender==NULL)?2:b->defender->place],
-           d_symPlayer[(b->dealer==NULL)?2:b->dealer->place]);
-    view_player(&b->desk, &b->left);
-    view_player(&b->desk, &b->right);
-    view_fight(b);
-    dbgView_history(&b->history);
-    printf("= = = = = = = = = = dbgView_board.");
+static void view_score(const sMatch *m) {
+    printf(".> Score: (%d) [%d:%d].\n", m->game, m->left.score, m->right.score);
 }
 
-//void dbgView_msg(char *s) {
-//    printf("%s", s);
-//    fflush(stdout);
-//}
+static void view_newGame(const sMatch *m) {
+    printf(".> New game. Match=%p.\n", m);
+    view_score(m);
+}
 
+static void view_newFight(const sMatch *m) {
+    printf(".> New fight. Attacker: %s player.\n", d_symPlayer[m->attacker->place]);
+}
+
+static void view_player(const  sDesk *d, const  sPlayer *p) {
+    printf(".> Player %s: (%d)\n[", d_symPlayer[p->place], p->count);
+    char *s = "";
+    for (int card = 0; card < ed_cards; ++card) { //by suit
+        if (d->place[card] == p->place) {
+            printf("%s%s", s, d_symCard[card]);
+            s = ".";
+        }
+    }
+    printf("] /%s[", (p->count > 16 ) ? "\n" : " ");
+    s = ""; //by ranks//
+    for (int rank = 0; rank < ed_ranks; ++rank) { //by rank
+        for (int suit = 0; suit < ed_suits; ++suit) {
+            int card = cardByRankSuit[rank][suit]; //suit * ed_ranks + rank;
+            if (d->place[card] == p->place) {
+                printf("%s%s", s, d_symCard[card]);
+                s = ".";
+            }
+        }
+    }
+    printf("].\n");
+}
+
+static void view_fight(const sMatch *m) {
+    printf(".> Fight: (%d) [%s]\n - attack: [", m->fight, d_symTrump[m->desk.trump]);
+    char *s = "";
+    for (int i = m->history.count - m->fight; i < m->history.count; i+=2) {
+        printf("%s%s", s, d_symCard[m->history.card[i]]);
+        s = ".";
+    }
+    printf("]\n - defend: [");
+    s = "";
+    for (int i = m->history.count - m->fight + 1; i < m->history.count; i+=2) {
+        printf("%s%s", s, d_symCard[m->history.card[i]]);
+        s = ".";
+    }
+    printf("].\n");
+}
+
+static void view_attack(const sMatch *m) {
+    view_player(&m->desk, m->attacker);
+    view_fight((const sMatch *)m);
+    char *s = (m->fight) ? "'e'-enough, " : "";
+    printf("?> Your attack. Please type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s);
+}
+
+void durView(sMatch *m) { //in durView.c only this f have not const sBoard (because b->stage)
+    switch (m->stage) {
+        case es_newGameView:
+            view_newGame((const sMatch *)m);
+            m->stage = es_newFight;
+            break;
+        case es_newFightView:
+            view_newFight((const sMatch *)m);
+            m->stage = es_attack;
+            break;
+        case es_attackView:
+            view_attack((const sMatch *)m);
+            m->stage = es_attackControl;
+            break;
+//        case es_defendView:
+//            durView_defend((const sBoard *)b);
+//            b->stage = es_defendControl;
+//            break;
+//        case es_attackResultEnoughView:
+//            printf(".> The fight is over by the attacker.\n");
+//            b->stage = es_fightCloseAsDefended;
+//            break;
+//        case es_defendResultTookView:
+//            printf(".> The fight is taken by the defender.\n");
+//            b->stage = es_fightCloseAsTook;
+//            break;
+    }
+}
+
+void durView_cmdWrong(char *s) {
+    if (s == NULL) {
+        s = "Wrong card or command was typed. Repeat please.";
+    }
+    printf("!> %s\n", s);
+}
+
+#ifdef DUR_DEBUG ////////////////////////////////////////////////////
+void durView_match(sMatch *m) {
+    printf("= = = = = = = = = = durView_match : sizeof(sMatch)=%lu, * = %p, stage = %d\n", sizeof(sMatch), m, m->stage);
+    view_score(m);
+    printf(".> Role: winner=%s, attacker=%s, defender=%s, dealer=%s.\n",
+           d_symPlayer[(m->winner  ==NULL)?2:m->winner  ->place],
+           d_symPlayer[(m->attacker==NULL)?2:m->attacker->place],
+           d_symPlayer[(m->defender==NULL)?2:m->defender->place],
+           d_symPlayer[(m->dealer  ==NULL)?2:m->dealer  ->place]);
+    printf(".> Desk: (%d) [%s]\n[", m->desk.count, d_symTrump[m->desk.card[0] / ed_ranks]);
+    char *s = "";
+    for (int i = 0; i < ed_cards; ++i) { printf("%s%02d", s, i); s = "-"; }
+    printf("]-id\n[");
+    s = "";
+    for (int i = 0; i < ed_cards; ++i) { printf("%s%s", s, d_symCard[m->desk.card[i]]); s = "."; }
+    printf("]-card\n");
+    if (m->stage > es_newGame) {
+        s = "";
+        printf("[");
+        for (int i = 0; i < ed_cards; ++i) { printf("%s%02d", s, m->desk.position[i]); s = "."; }
+        printf("]-position\n[");
+        s = "";
+        for (int i = 0; i < ed_cards; ++i) { printf("%s%s", s, d_symPlace[m->desk.place[m->desk.card[i]]]); s = "."; }
+        printf("]-place.\n");
+        if (m->stage > es_newFight) {
+            view_player(&m->desk, &m->left);
+            view_player(&m->desk, &m->right);
+            view_fight(m);
+        }
+    }
+    printf("= = = = = = = = = = durView_match.\n");
+}
 #endif //DUR_DEBUG
 
 
-
-
-// = = = = = = = = = = = = = = = = = = = = = = = =
-// = = = = = = = = = = = = = = = = = = = = = = = =
-// = = = = = = = = = = = = = = = = = = = = = = = =
 // = = = = = = = = = = = = = = = = = = = = = = = =
 // = = = = = = = = = = = = = = = = = = = = = = = =
 

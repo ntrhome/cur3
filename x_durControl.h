@@ -1,8 +1,4 @@
-#ifndef DUR_DURCONTROL_H
-#define DUR_DURCONTROL_H
+#pragma once
+#include "dur.h"
 
-//#include "durModel.h"
-
-void durControl(sBoard *b);
-
-#endif //DUR_DURCONTROL_H
+void durControl(sMatch *m);

@@ -1,15 +1,9 @@
-#ifndef DUR_DURVIEW_H
-#define DUR_DURVIEW_H
-
-//#include "durModel.h"
+#pragma once
 #include "dur.h"
 
-//void durView(sBoard *b);
+void durView(sMatch *m);
+void durView_cmdWrong(char *s);
 
-
-#ifdef DUR_DEBUG   // [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [ [
-void durView_match(const sMatch *m);
-//void durView_msg(char *s);
-#endif //DUR_DEBUG // ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ] ]
-
-#endif //DUR_DURVIEW_H
+#ifdef DUR_DEBUG ////////////////////////////////////////////////////
+    void durView_match(sMatch *m);
+#endif //DUR_DEBUG
