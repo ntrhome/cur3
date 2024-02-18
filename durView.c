@@ -112,9 +112,12 @@ void durView(sMatch *m) { //in durView.c only this f have not const sBoard (beca
     }
 }
 
-//void durView_cmdWrong() {
-//    printf("!> Wrong card or command was typed. Repeat please.\n");
-//}
+void durView_cmdWrong(char *s) {
+    if (s == NULL) {
+        s = "Wrong card or command was typed. Repeat please.";
+    }
+    printf("!> %s\n", s);
+}
 
 #ifdef DUR_DEBUG ////////////////////////////////////////////////////
 void durView_match(sMatch *m) {

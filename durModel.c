@@ -2,6 +2,8 @@
 #include <time.h>   //for srand
 #include "durModel.h"
 
+static const int rankByCard[ed_cards] = { 0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8 };
+
 sMatch *durNewMatch() {
     sMatch *m = malloc(sizeof(sMatch));
     LOGIF(m == NULL)
@@ -99,6 +101,13 @@ static void fight2pile(sMatch *m) {
     sPlayer *depot = m->attacker; m->attacker = m->defender; m->defender = depot;
 }
 
+static bool attackResult_isFightHasRank(const sMatch *m) {
+    int cmdRank = rankByCard[m->cmd];
+    for (int i = m->history.count - m->fight; i < m->history.count; ++i) {
+        if (rankByCard[m->history.card[i]] == cmdRank) return true;
+    }
+    return false;
+}
 static void attackResult(sMatch *m) {
     if (m->cmd < 0) { //cmd
         if (m->cmd == es_cmdEnough && m->fight) {
@@ -111,7 +120,23 @@ static void attackResult(sMatch *m) {
             return;
         }
         m->cmd = es_cmdWrong; //todo
-    } else if (b->attacker->hold[b->cmd] && ((b->attack.count == 0) || attackResult_isFightHasRank(b))) { //card
+    } else if ((m->desk.place[m->cmd] == m->attacker->place) && ((m->fight == 0)) || attackResult_isFightHasRank(m)) {
+        m->desk.place[m->cmd] = ep_attack;
+        ++m->fight;
+        --m->attacker->count;
+        history(&m->history, m->cmd, ep_attack);
+
+        m->stage = es_defend;
+        return;
+    } else {
+        durView_cmdWrong("");
+    }
+
+}
+
+
+
+        if (b->attacker->hold[b->cmd] && ((b->attack.count == 0) || attackResult_isFightHasRank(b))) { //card
         b->attacker->hold[b->cmd] = 0;
         --b->attacker->count;
         b->attack.card[b->attack.count++] = b->cmd;
