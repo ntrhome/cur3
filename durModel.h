@@ -1,6 +1,8 @@
 #pragma once
 #include "dur.h"
 
+sMatch *durModel_newMatch();
 void durModel(sMatch *m);
 
-sMatch *durNewMatch();
+
+void durModel_closeMatchIfQuit(sMatch **m);

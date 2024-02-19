@@ -1,10 +1,13 @@
 #pragma once
 #include "main.h"
 #define DUR_DEBUG
-
 typedef enum ED { ed_players=2, ed_suits=4, ed_ranks = 9, ed_cards = ed_suits * ed_ranks, ed_normal = 6, ed_talon = ed_cards - ed_players * ed_normal } ed;
-typedef enum ES { es_newGame, es_newGameView, es_newFight, es_newFightView, es_attack, es_attackView, es_attackControl, es_attackResult, es_defend, es_cmdQuit=-100, es_cmdWrong=-101, es_cmdEnough=-102, es_cmdTake=-103, es_cmdNewGame=-104 } es; //es_attackView, es_attackControl, es_attackResult, es_attackResultEnoughView, es_defend, es_defendView, es_defendControl, es_defendResult, es_defendResultTookView, es_fightCloseAsDefended, es_fightCloseAsTook, es_cmdQuit = 1001, es_cmd_enough, es_cmd_take, es_cmd_newGame, es_cmd_wrong
-typedef enum EP { ep_left=0, ep_right=1, ep_attack, ep_defend, ep_pile, ep_desk} ep;
+typedef enum EP { ep_left=0, ep_right=1, ep_fight, ep_pile, ep_desk} ep;
+typedef enum ES { es_gameModel,  es_gameView,
+                  es_fightModel, es_fightView,
+
+                  es_cmdQuit
+                  } es;
 
 typedef struct {
     int count;
@@ -27,14 +30,12 @@ typedef struct {
 } sHistory;
 
 typedef struct {
-    es stage;
-    int game; //game N
     sDesk desk;
     sPlayer left, right;
     sPlayer *winner, *attacker, *defender, *dealer; //roles
-    int fight; //cards count in fight
     sHistory history;
+    int fight; //cards count in fight
+    int game; //game N
+    es stage;
     es cmd;
 } sMatch;
-
-
