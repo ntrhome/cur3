@@ -18,6 +18,18 @@ sMatch *durModel_newMatch() {
     }
     return m;
 }
+void durModel_newMatch_quitCheckout(sMatch **p0m) {
+    if ((*p0m)->state == es_cmdQuit) {
+        free(*p0m);
+        *p0m = NULL;
+    }
+
+//    sMatch *a = *m;
+//    if ((a)->state == es_cmdQuit) {
+//        free(a);
+//        *m = NULL;
+//    }
+}
 
 static void game_desk(sDesk *d) { //new game desk init
     srand((int)time(NULL));
@@ -119,6 +131,8 @@ static es attackHandler(sMatch *m) {
             ++m->fight;
             --m->attacker->count;
             history(&m->history, m->cmd, ep_attack);
+//if (m->attacker->count == ed_normal) return es_cmdQuit; //dbg
+//return es_attackModel; //dbg
             return es_defendModel;
         }
         return es_attackHandlerViewUnacceptable;
@@ -175,17 +189,5 @@ void durModel(sMatch *m) {
             default:
                 m->state = es_cmdQuit;
         }
-    }
-}
-
-void durModel_quitCheckout(sMatch **m) {
-//    if ((*m)->state == es_cmdQuit) {
-//        free(*m);
-//        m = NULL;
-//    }
-    sMatch *a = *m;
-    if ((a)->state == es_cmdQuit) {
-        free(a);
-        m = NULL;
     }
 }

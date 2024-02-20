@@ -12,7 +12,7 @@ static es input() { //return card [0..ed_cards) or command (es > 1000)
     if (scanf("%2s", s) == 1) {
         if (s[0] >= 'a' && s[0] <= 'z') s[0] -= ('a' - 'A'); //toupper(s[0])
         if (s[1] == 0) { //one symbol - command
-            switch (s[1]) {
+            switch (s[0]) {
                 case 'E': return es_cmdEnough;
                 case 'T': return es_cmdTake;
                 case 'Y': return es_cmdYes;

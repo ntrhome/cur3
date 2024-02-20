@@ -8,12 +8,8 @@ void dur() {
         durModel(m);
         durView(m);    //отделяем для автономности - возможность потока (в потоках - либо учим симафоры, либо - проще - бьём state на подуровни ..View и ..Control для синхронизации
         durControl(m); //отделяем для автономности - возможность потока
-//        m->state = es_cmdQuit;
-printf("DBG Match=%p\n", m);
-        durModel_quitCheckout(&m);
-printf("DBG Match=%p\n", m);
+        durModel_newMatch_quitCheckout(&m);
     }
-    //durView_match(m);
 }
 
 int main(void) { //int argc, char *argv[], char *envp[]
