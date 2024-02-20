@@ -33,7 +33,7 @@ static void game(const sMatch *m) {
     score(m);
 }
 
-static void player(const  sMatch *m, const  sPlayer *p) {
+static void fight_player(const  sMatch *m, const  sPlayer *p) {
     char *s = (p == m->attacker) ? "Attacker" : "Defender";
     printf(".> %s %s: (%d)\n[", s, d_symPlayer[p->place], p->count);
     s = "";
@@ -55,7 +55,7 @@ static void player(const  sMatch *m, const  sPlayer *p) {
     }
     printf("].\n");
 }
-static void fight(const sMatch *m) {
+static void fight_fight(const sMatch *m) {
     printf(".> Fight: (%d) [%s]\n - attack: [", m->fight, d_symTrump[m->desk.trump]);
     char *s = "";
     for (int i = m->history.count - m->fight; i < m->history.count; i+=2) {
@@ -71,10 +71,17 @@ static void fight(const sMatch *m) {
     printf("].\n");
 }
 static void attack(const sMatch *m) {
-    player(m, m->attacker);
-    fight(m);
+    fight_player(m, m->attacker);
+    fight_fight(m);
     char *s = (m->fight) ? "'e'-enough, " : "";
     printf("?> Your attack. Please type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s);
+}
+
+static void defend(const sMatch *m) {
+    fight_player(m, m->defender);
+    fight_fight(m);
+    char *s = "'t'-take, ";
+    printf("?> Your defend. Please type a card (e.g. '6s', 'Ah') or command (%s'q'-quit): ", s);
 }
 
 void durView(sMatch *m) { //in durView.c only this f have not const sBoard (because b->state)
@@ -86,7 +93,7 @@ void durView(sMatch *m) { //in durView.c only this f have not const sBoard (beca
                 break;
             case es_attackView:
                 attack((const sMatch *)m);
-                m->state = es_attackControl; //
+                m->state = es_attackControl;
                 break;
             case es_attackHandlerViewWrong:
                 printf("!> Your answer is wrong.\n");
@@ -96,20 +103,28 @@ void durView(sMatch *m) { //in durView.c only this f have not const sBoard (beca
                 printf("!> Your answer is unacceptable.\n");
                 m->state = es_attackView;
                 break;
-//        case es_attackView:
-//            view_attack((const sMatch *)m);
-//            m->state = es_attackControl;
-//            break;
+            case es_defendView:
+                defend(m);
+                m->state = es_defendControl;
+                break;
+            case es_defendHandlerViewWrong:
+                printf("!> Your answer is wrong.\n");
+                m->state = es_defendView;
+                break;
+            case es_defendHandlerViewUnacceptable:
+                printf("!> Your answer is unacceptable.\n");
+                m->state = es_defendView;
+                break;
 //        case es_defendView:
 //            durView_defend((const sBoard *)b);
 //            b->state = es_defendControl;
 //            break;
 //        case es_attackResultEnoughView:
-//            printf(".> The fight is over by the attacker.\n");
+//            printf(".> The attack_fight is over by the attacker.\n");
 //            b->state = es_fightCloseAsDefended;
 //            break;
 //        case es_defendResultTookView:
-//            printf(".> The fight is taken by the defender.\n");
+//            printf(".> The attack_fight is taken by the defender.\n");
 //            b->state = es_fightCloseAsTook;
 //            break;
         }

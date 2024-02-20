@@ -45,10 +45,10 @@ void durControl(sMatch *m) {
             m->cmd = input();
             m->state = es_attackHandler;
             break;
-//        case es_defendControl:
-//            b->cmd = durControl_inputCardOrCommand();
-//            b->state = es_defendResult;
-//            break;
+        case es_defendControl:
+            m->cmd = input();
+            m->state = es_defendHandler;
+            break;
         }
     }
 }
