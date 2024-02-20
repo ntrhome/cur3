@@ -2,6 +2,9 @@
 #include <stdlib.h> //for srand, rand, malloc, free
 #include <time.h>   //for srand
 
+static const int rankOfCard[ed_cards] = { 0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8,0,1,2,3,4,5,6,7,8 };
+
+
 sMatch *durModel_newMatch() {
     sMatch *m = malloc(sizeof(sMatch));
     LOGIFN(m)
@@ -11,8 +14,7 @@ sMatch *durModel_newMatch() {
         m->right.place = ep_right, m->right.score = 0;
         m->winner = NULL;
         m->game = 0;
-        m->stage = es_gameModel;
-
+        m->state = es_gameModel;
     }
     return m;
 }
@@ -62,22 +64,98 @@ static void game(sMatch *m) {
     m->history.count = 0;
 }
 
+static void history(sHistory *h, int card, ep place) {
+    h->card[h->count] = card;
+    h->place[h->count++] = place;
+}
+
+static void fight_dealing(sMatch *m) {
+    sPlayer *p = m->dealer;
+    for (int n = 0; n < ed_players; ++n) {
+        while (p->count < ed_normal && m->desk.count > 0) {
+            m->desk.place[m->desk.card[--m->desk.count]] = p->place;
+            ++p->count;
+            history(&m->history, m->desk.card[m->desk.count], p->place);
+        }
+        p = (p == &m->left) ? &m->right : &m->left;
+    }
+}
+static void fight(sMatch *m) {
+    fight_dealing(m);
+    m->dealer = m->attacker; //for next newFight
+    m->fight = 0;
+}
+
+static void attack(sMatch *m) {
+}
+
+static bool isCommand(const sMatch *m) {
+    return m->cmd > es_cmd;
+}
+static bool attackHandler_isFightHasRank(const sMatch *m) {
+    int rank = rankOfCard[m->cmd];
+    for (int i = m->history.count - m->fight; i < m->history.count; ++i) {
+        if (rankOfCard[m->history.card[i]] == rank) return true;
+    }
+    return false;
+}
+static es attackHandler(sMatch *m) {
+    if (isCommand(m)) { //command
+        if (m->fight && m->cmd == es_cmdEnough) {
+            int fightBegin = m->history.count - m->fight;
+            int fightEnd   = m->history.count;
+            for (int i = fightBegin; i < fightEnd; ++i) {
+                m->desk.place[m->history.card[i]] = ep_pile;
+                history(&m->history, m->history.card[i], ep_pile);
+            }
+            sPlayer *depot = m->attacker; m->attacker = m->defender; m->defender = depot;
+            return es_fightModel;
+        }
+        if (m->cmd == es_cmdQuit) return es_cmdQuit;
+        return es_attackHandlerViewWrong;
+    } else {            //card
+        if (m->desk.place[m->cmd] == m->attacker->place && (m->fight == 0 || attackHandler_isFightHasRank(m))) {
+            m->desk.place[m->cmd] = ep_attack;
+            ++m->fight;
+            --m->attacker->count;
+            history(&m->history, m->cmd, ep_attack);
+            return es_defendModel;
+        }
+        return es_attackHandlerViewUnacceptable;
+    }
+}
+
 void durModel(sMatch *m) {
     if (m != NULL) {
-        switch (m->stage) {
+        switch (m->state) {
             case es_gameModel:
                 game(m);
-                m->stage = es_gameView;
+                m->state = es_gameView;
                 break;
-//        case es_newFight:
-//            newFight(m);
-//            m->stage = es_newFightView;
-//            break;
+            case es_gameView:
+                break;
+            case es_fightModel:
+                fight(m);
+                m->state = es_attackModel;
+                break;
+            case es_attackModel:
+                attack(m);
+                m->state = es_attackView;
+            case es_attackView:
+            case es_attackControl:
+                break;
+            case es_attackHandler:
+                m->state = attackHandler(m);
+                break;
+            case es_attackHandlerViewWrong:
+            case es_attackHandlerViewUnacceptable:
+                break;
+
 //        case es_newFightView: //view
 //            break;
 //        case es_attack:
 //            attack(m);
-//            m->stage = es_attackView;
+//            m->state = es_attackView;
 //            break;
 //        case es_attackResult:
 //            attackResult(m);
@@ -95,15 +173,19 @@ void durModel(sMatch *m) {
 //            fightCloseAsTook(b);
 //            break;
             default:
-                m->stage = es_cmdQuit;
+                m->state = es_cmdQuit;
         }
     }
 }
 
-void durModel_closeMatchIfQuit(sMatch **m) {
-    if ((*m)->stage == es_cmdQuit) {
-        sMatch *mm = *m;
-        free(*m);
-        *m = NULL;
+void durModel_quitCheckout(sMatch **m) {
+//    if ((*m)->state == es_cmdQuit) {
+//        free(*m);
+//        m = NULL;
+//    }
+    sMatch *a = *m;
+    if ((a)->state == es_cmdQuit) {
+        free(a);
+        m = NULL;
     }
 }

@@ -5,4 +5,4 @@ sMatch *durModel_newMatch();
 void durModel(sMatch *m);
 
 
-void durModel_closeMatchIfQuit(sMatch **m);
+void durModel_quitCheckout(sMatch **m);
