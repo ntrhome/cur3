@@ -7,6 +7,7 @@ typedef enum ES { es_gameModel,  es_gameView,
                   es_fightModel,
                   es_attackModel, es_attackView, es_attackControl, es_attackHandler, es_attackHandlerViewWrong, es_attackHandlerViewUnacceptable,
                   es_defendModel, es_defendView, es_defendControl, es_defendHandler, es_defendHandlerViewWrong, es_defendHandlerViewUnacceptable,
+                  es_checkoutViewDraw, es_checkoutViewWinnerLeft, es_checkoutViewWinnerRight,
                   es_cmd = 100,
                   es_cmdQuit, es_cmdWrong, es_cmdEnough, es_cmdTake, es_cmdYes,
                   } es;

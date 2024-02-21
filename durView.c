@@ -29,11 +29,13 @@ static void score(const sMatch *m) {
 }
 
 static void game(const sMatch *m) {
+    printf(".> ==================================================\n");
     printf(".> New game. Match=%p.\n", m);
     score(m);
 }
 
 static void fight_player(const  sMatch *m, const  sPlayer *p) {
+    printf(".> ------------------------------\n");
     char *s = (p == m->attacker) ? "Attacker" : "Defender";
     printf(".> %s %s: (%d)\n[", s, d_symPlayer[p->place], p->count);
     s = "";
@@ -115,19 +117,18 @@ void durView(sMatch *m) { //in durView.c only this f have not const sBoard (beca
                 printf("!> Your answer is unacceptable.\n");
                 m->state = es_defendView;
                 break;
-//        case es_defendView:
-//            durView_defend((const sBoard *)b);
-//            b->state = es_defendControl;
-//            break;
-//        case es_attackResultEnoughView:
-//            printf(".> The attack_fight is over by the attacker.\n");
-//            b->state = es_fightCloseAsDefended;
-//            break;
-//        case es_defendResultTookView:
-//            printf(".> The attack_fight is taken by the defender.\n");
-//            b->state = es_fightCloseAsTook;
-//            break;
+            case es_checkoutViewDraw:
+                printf("!> IT'S DRAW!!!\n");
+                m->state = es_gameModel;
+                break;
+            case es_checkoutViewWinnerLeft:
+                printf("!> LEFT PLAYER WIN!!!\n");
+                m->state = es_gameModel;
+                break;
+            case es_checkoutViewWinnerRight:
+                printf("!> RIGHT PLAYER WIN!!!\n");
+                m->state = es_gameModel;
+                break;
         }
     }
 }
-

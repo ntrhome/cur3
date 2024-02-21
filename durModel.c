@@ -67,6 +67,7 @@ static void game_players(sMatch *m) { //new game players init
 static void game(sMatch *m) {
     game_desk(&m->desk);
     game_players(m);
+    ++m->game;
     m->history.count = 0;
 }
 
@@ -92,7 +93,20 @@ static void fight(sMatch *m) {
     m->fight = 0;
 }
 
-static void attack(sMatch *m) {
+static es attack(sMatch *m) {
+    if (m->attacker->count == 0 && m->defender->count == 0) {
+        m->winner = NULL;
+        return es_checkoutViewDraw;
+    }
+    if (m->attacker->count == 0) {
+        m->winner = m->attacker;
+        return (m->winner->place == ep_right) ? es_checkoutViewWinnerRight : es_checkoutViewWinnerLeft;
+    }
+    if (m->defender->count == 0) {
+        m->winner = m->defender;
+        return (m->winner->place == ep_right) ? es_checkoutViewWinnerRight : es_checkoutViewWinnerLeft;
+    }
+    return es_attackView;
 }
 
 static bool attackHandler_isFightHasRank(const sMatch *m) {
@@ -122,8 +136,6 @@ static es attackHandler(sMatch *m) {
             ++m->fight;
             --m->attacker->count;
             history(&m->history, m->cmd, ep_attack);
-//if (m->attacker->count == ed_normal) return es_cmdQuit; //dbg
-//return es_attackModel; //dbg
             return es_defendModel;
         }
         return es_attackHandlerViewUnacceptable;
@@ -160,11 +172,16 @@ static es defendHandler(sMatch *m) {
             ++m->fight;
             --m->defender->count;
             history(&m->history, m->cmd, ep_defend);
+            if (m->fight == 2 * ed_normal) { //checkout max fight
+                m->cmd = es_cmdEnough;
+                return es_attackHandler;
+            }
             return es_attackModel;
         }
         return es_defendHandlerViewUnacceptable;
     }
 }
+
 
 void durModel(sMatch *m) {
     if (m != NULL) {
@@ -180,8 +197,7 @@ void durModel(sMatch *m) {
                 m->state = es_attackModel;
                 break;
             case es_attackModel:
-                attack(m);
-                m->state = es_attackView;
+                m->state = attack(m);
             case es_attackView:
             case es_attackControl:
                 break;
@@ -204,21 +220,10 @@ void durModel(sMatch *m) {
             case es_defendHandlerViewWrong:
             case es_defendHandlerViewUnacceptable:
                 break;
-//        case es_attackResult:
-//            attackResult(m);
-//            break;
-//        case es_defend:
-//            defend(b);
-//            break;
-//        case es_defendResult:
-//            defendResult(b); //todo
-//            break;
-//        case es_fightCloseAsDefended:
-//            fightCloseAsDefended(b);
-//            break;
-//        case es_fightCloseAsTook:
-//            fightCloseAsTook(b);
-//            break;
+            case es_checkoutViewDraw:
+            case es_checkoutViewWinnerLeft:
+            case es_checkoutViewWinnerRight:
+                break;
             default:
                 LOG
                 m->state = es_cmdQuit;
