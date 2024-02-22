@@ -100,10 +100,12 @@ static es attack(sMatch *m) {
     }
     if (m->attacker->count == 0) {
         m->winner = m->attacker;
+        ++m->winner->score;
         return (m->winner->place == ep_right) ? es_checkoutViewWinnerRight : es_checkoutViewWinnerLeft;
     }
     if (m->defender->count == 0) {
         m->winner = m->defender;
+        ++m->winner->score;
         return (m->winner->place == ep_right) ? es_checkoutViewWinnerRight : es_checkoutViewWinnerLeft;
     }
     return es_attackView;
